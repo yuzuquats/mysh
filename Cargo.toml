@@ -1,4 +1,4 @@
-workspace = { members = ["example/simple"] }
+workspace = { members = ["examples/simple", "mysh-derive"] }
 
 [package]
 name = "mysh"

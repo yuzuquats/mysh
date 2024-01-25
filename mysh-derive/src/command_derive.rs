@@ -2,9 +2,9 @@ use std::ops::Deref;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::FnArg::Typed;
-use syn::Type;
-use syn::{parse_macro_input, spanned::Spanned, FnArg, Ident, LitStr};
+use syn::FnArg::{self, Typed};
+use syn::{parse_macro_input, spanned::Spanned, Ident, LitStr};
+use syn::{ItemFn, Type};
 
 pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
   let (name, description, long_description) = {
@@ -38,7 +38,7 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
     )
   };
 
-  let ast = match syn::parse::<syn::ItemFn>(func.clone()) {
+  let ast = match syn::parse::<ItemFn>(func.clone()) {
     Ok(ast) => ast,
     Err(err) => return input_and_compile_error(func, err),
   };
