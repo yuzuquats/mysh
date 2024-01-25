@@ -2,7 +2,7 @@ workspace = { members = ["examples/simple", "mysh-derive"] }
 
 [package]
 name = "mysh"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.68"
 authors = [
@@ -27,3 +27,4 @@ serde_derive = "1.0.195"
 serde_json = "1.0.111"
 mysh_derive = { version = "0.1.0", path = "./mysh-derive" }
 thiserror = "1.0.56"
+reedline = "0.28.0"

@@ -14,6 +14,7 @@ async fn main() {
   Shell::new(UserInfo {})
     .add_command(commands::hello::hello)
     .add_command(commands::pwd::pwd)
+    .add_command(commands::ls::ls)
     .run()
     .await;
 }

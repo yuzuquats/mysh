@@ -3,10 +3,8 @@ use crate::tokenizer::IntoArgs;
 use anyhow::anyhow;
 use colored::Colorize;
 use command::CommandList;
-use ctrlc;
+use reedline::{Prompt, Reedline, Signal};
 use std::env;
-use std::io::Write;
-use std::process::exit;
 
 pub mod command;
 pub mod command_arg;
@@ -18,16 +16,20 @@ pub extern crate mysh_derive;
 pub use mysh_derive::command;
 pub use mysh_derive::*;
 
-pub async fn run<Info>(info: Info, commands: CommandList<Info>)
+pub async fn run<Info>(info: Info, commands: CommandList<Info>, prompt: &dyn Prompt)
 where
   Info: Clone,
 {
-  if let Err(e) = run_once_or_loop(&info, commands).await {
+  if let Err(e) = run_once_or_loop(&info, commands, prompt).await {
     println!("{} {}", "[Error]".red(), e);
   }
 }
 
-async fn run_once_or_loop<Info>(info: &Info, commands: CommandList<Info>) -> Result<(), Error>
+async fn run_once_or_loop<Info>(
+  info: &Info,
+  commands: CommandList<Info>,
+  prompt: &dyn Prompt,
+) -> Result<(), Error>
 where
   Info: Clone,
 {
@@ -38,32 +40,32 @@ where
     return Ok(());
   }
 
-  ctrlc::set_handler(|| exit(0)).expect("couldn't set ctrlc handler");
+  let mut line_editor = Reedline::create();
   loop {
-    print!(">> ");
-    if let Err(e) = loop_once(info, &commands).await {
-      println!("{} {}", "[Error]".red(), e);
+    let sig = line_editor.read_line(prompt);
+
+    match sig {
+      Ok(Signal::Success(buffer)) => {
+        let line = buffer.to_string();
+        if line.len() == 0 {
+          continue;
+        }
+
+        let argv = line
+          .try_into_args()
+          .map_err(|e| anyhow!("arg parse error >> {e}"))?;
+
+        commands.exec(info, argv).await?;
+      }
+      Ok(Signal::CtrlD) | Ok(Signal::CtrlC) => {
+        println!("\nAborted!");
+        break;
+      }
+      x => {
+        println!("Event: {:?}", x);
+      }
     }
   }
-}
 
-async fn loop_once<Info>(info: &Info, commands: &CommandList<Info>) -> Result<(), Error>
-where
-  Info: Clone,
-{
-  std::io::stdout()
-    .flush()
-    .map_err(|e| anyhow!("Could not flush stdout >> {e}"))?;
-
-  let mut line = String::new();
-  std::io::stdin()
-    .read_line(&mut line)
-    .map_err(|e| anyhow!("unable to read from stdin >> {e}"))?;
-
-  let argv = line
-    .try_into_args()
-    .map_err(|e| anyhow!("arg parse error >> {e}"))?;
-
-  commands.exec(info, argv).await?;
-  Ok(())
+  return Ok(());
 }
