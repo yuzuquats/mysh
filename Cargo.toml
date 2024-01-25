@@ -4,6 +4,16 @@ workspace = { members = ["example/simple"] }
 name = "mysh"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.68"
+authors = [
+    "James Kao <james.l.kao@gmail.com>",
+]
+description = "Scaffolding to build interactive shells"
+readme = "README.md"
+keywords = ["shell", "cli", "interactive", "terminal"]
+categories = ["command-line-interface"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/yuzuquats/mysh"
 
 [dependencies]
 anyhow = "1.0.79"
@@ -15,5 +25,5 @@ serde = "1.0.195"
 serde-reflection = "0.3.6"
 serde_derive = "1.0.195"
 serde_json = "1.0.111"
-mysh_derive = { path = "./derive" }
+mysh_derive = { version = "0.1.0", path = "./derive" }
 thiserror = "1.0.56"

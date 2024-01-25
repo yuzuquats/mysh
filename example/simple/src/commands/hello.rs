@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::UserInfo;
 
-#[derive(CommandArg, Deserialize, Debug, Clone)]
+#[derive(CommandArg, Deserialize, Clone)]
 pub struct Args {
   name: String,
 }
