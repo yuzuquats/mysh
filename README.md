@@ -6,7 +6,7 @@ mysh, short for "My Shell", is a rust library for quickly building small interac
 
 ```toml
 [dependencies]
-mysh = "0.1.0"
+mysh = "0.1.1"
 futures = "0.3"
 ```
 
@@ -44,11 +44,20 @@ async fn main() {
 }
 ```
 
+### Trigger read-eval-print-loop
+
 ```bash
 cargo run
 
 >> hello --name World
-hello World
+Hello World
+```
+
+### Run single command
+
+```bash
+cargo run -- hello --name World
+Hello World
 ```
 
 ## Run Examples

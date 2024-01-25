@@ -34,11 +34,13 @@ where
   Info: Clone,
 {
   let mut argv: Vec<String> = env::args().collect();
-  if argv.len() > 2 {
+  if argv.len() > 1 {
     argv.remove(0);
     commands.exec(info, argv).await?;
     return Ok(());
   }
+
+  println!("argv: {:?}", argv);
 
   let mut line_editor = Reedline::create();
   loop {
