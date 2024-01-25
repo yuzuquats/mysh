@@ -1,10 +1,10 @@
 use mysh::command_arg::CommandArg;
 use mysh::{command, CommandArg};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::UserInfo;
 
-#[derive(CommandArg, Serialize, Deserialize, Debug, Clone)]
+#[derive(CommandArg, Deserialize, Debug, Clone)]
 pub struct Args {
   name: String,
 }
