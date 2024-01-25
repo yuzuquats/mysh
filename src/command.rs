@@ -35,7 +35,7 @@ pub trait CommandMetadata<Info> {
   }
 }
 
-pub(crate) struct CommandList<Info> {
+pub struct CommandList<Info> {
   pub commands: Vec<Box<dyn CommandMetadata<Info>>>,
 }
 

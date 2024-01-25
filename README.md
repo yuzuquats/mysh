@@ -49,3 +49,9 @@ cargo run
 >> hello --name World
 hello World
 ```
+
+## Run Examples
+
+```bash
+cargo run -p simple
+```
