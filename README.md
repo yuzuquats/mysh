@@ -42,3 +42,10 @@ async fn main() {
     .await;
 }
 ```
+
+```bash
+cargo run
+
+>> hello --name World
+hello World
+```
