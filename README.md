@@ -7,6 +7,7 @@ mysh, short for "My Shell", is a rust library for quickly building small interac
 ```toml
 [dependencies]
 mysh = "0.1.0"
+futures = "0.3"
 ```
 
 ```rust
