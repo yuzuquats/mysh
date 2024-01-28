@@ -13,6 +13,7 @@ pub mod shell;
 mod tokenizer;
 
 pub extern crate mysh_derive;
+pub use futures;
 pub use mysh_derive::command;
 pub use mysh_derive::*;
 
@@ -57,7 +58,8 @@ where
           .try_into_args()
           .map_err(|e| anyhow!("arg parse error >> {e}"))?;
 
-        commands.exec(info, argv).await?;
+        let r = commands.exec(info, argv).await;
+        println!("command result: {r:?}");
       }
       Ok(Signal::CtrlD) | Ok(Signal::CtrlC) => {
         println!("\nAborted!");

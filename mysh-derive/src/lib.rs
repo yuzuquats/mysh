@@ -1,3 +1,5 @@
+#![feature(extend_one)]
+
 use proc_macro::TokenStream;
 
 mod command_arg_derive;

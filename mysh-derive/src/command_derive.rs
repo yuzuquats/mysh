@@ -1,7 +1,9 @@
 use std::ops::Deref;
+use std::str::FromStr;
 
 use proc_macro::TokenStream;
-use quote::quote;
+use proc_macro2::{Delimiter, Group};
+use quote::{quote, ToTokens};
 use syn::FnArg::{self, Typed};
 use syn::{parse_macro_input, spanned::Spanned, Ident, LitStr};
 use syn::{ItemFn, Type};
@@ -32,9 +34,18 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
     });
     parse_macro_input!(attr with attr_parser);
     (
-      name.expect(""),
-      description.expect(""),
-      long_description.expect(""),
+      name.expect("name required"),
+      description.expect("description required"),
+      match long_description {
+        Some(s) => {
+          let mut st = proc_macro2::TokenStream::from_str("Some").expect("");
+          st.extend_one(
+            Group::new(Delimiter::Parenthesis, s.into_token_stream()).into_token_stream(),
+          );
+          st
+        }
+        None => proc_macro2::TokenStream::from_str("None").expect(""),
+      },
     )
   };
 
@@ -92,7 +103,7 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
       type Output = Result<(), mysh::error::Error>;
 
       fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
-        let r = futures::executor::block_on(#func_name::call(&self.info, &self.args));
+        let r = mysh::futures::executor::block_on(#func_name::call(&self.info, &self.args));
         std::task::Poll::Ready(r)
       }
     }
@@ -122,12 +133,12 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
       fn description(&self) -> &'static str {
         #description
       }
-      fn long_description(&self) -> &'static str {
+      fn long_description(&self) -> Option<&'static str> {
         #long_description
       }
       fn call_with_argv(&self, info: #info_ty, argv: Vec<String>) -> Result<(), mysh::error::Error> {
         let args = mysh::command_arg::parse_command_arg(argv)?;
-        let r = futures::executor::block_on(#func_name::call(info, &args));
+        let r = mysh::futures::executor::block_on(#func_name::call(info, &args));
         Ok(())
       }
       fn help(&self) -> &'static str {

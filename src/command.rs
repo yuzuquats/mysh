@@ -8,7 +8,7 @@ use crate::error::Error;
 pub trait CommandMetadata<Info> {
   fn name(&self) -> &'static str;
   fn description(&self) -> &'static str;
-  fn long_description(&self) -> &'static str;
+  fn long_description(&self) -> Option<&'static str>;
   fn call_with_argv(&self, info: &Info, argv: Vec<String>) -> Result<(), Error>;
   fn help(&self) -> &'static str;
 
@@ -24,7 +24,7 @@ pub trait CommandMetadata<Info> {
     println!(
       "\n{}\n    {}\n",
       "Description:".bold(),
-      self.long_description()
+      self.long_description().unwrap_or(self.description())
     );
     if options.len() > 0 {
       println!("{}", "Options:".bold());
