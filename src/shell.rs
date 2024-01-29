@@ -46,6 +46,6 @@ where
   }
 
   pub async fn run(self) {
-    crate::run(self.info, self.commands, self.prompt.deref()).await;
+    crate::run_loop::run(self.info, self.commands, self.prompt.deref()).await;
   }
 }

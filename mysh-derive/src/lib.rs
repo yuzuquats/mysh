@@ -1,9 +1,9 @@
 #![feature(extend_one)]
 
-use proc_macro::TokenStream;
-
 mod command_arg_derive;
 mod command_derive;
+
+use proc_macro::TokenStream;
 
 #[proc_macro_derive(CommandArg)]
 pub fn derive_command_arg(input: TokenStream) -> TokenStream {

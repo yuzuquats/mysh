@@ -1,5 +1,4 @@
 use colored::Colorize;
-use futures::future::BoxFuture;
 use futures::Future;
 
 pub use mysh_derive::*;
