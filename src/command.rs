@@ -1,8 +1,7 @@
 use colored::Colorize;
 use futures::Future;
 
-pub use mysh_derive::*;
-
+use crate::command_arg::CommandArg;
 use crate::error::Error;
 
 pub trait CommandMetadata<Info> {

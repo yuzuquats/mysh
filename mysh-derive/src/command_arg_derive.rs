@@ -24,10 +24,10 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
   let name = input.ident;
   let expanded = quote! {
-    impl CommandArg for #name {
-        fn display_help() -> &'static str {
-            #args
-        }
+    impl mysh::command_arg::CommandArg for #name {
+      fn display_help() -> &'static str {
+          #args
+      }
     }
   };
 

@@ -7,6 +7,7 @@ mod tokenizer;
 
 pub use futures;
 extern crate mysh_derive;
-pub use command::CommandArg;
-pub use mysh_derive::command;
-pub use mysh_derive::CommandArg;
+pub mod macros {
+  pub use mysh_derive::command;
+  pub use mysh_derive::CommandArg;
+}

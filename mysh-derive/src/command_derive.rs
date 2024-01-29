@@ -53,7 +53,7 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
     Ok(ast) => ast,
     Err(err) => return input_and_compile_error(func, err),
   };
-  let (info_ty, args_ty, func_name, func_name_future, call_func) = {
+  let (info_ty, args_ty, func_name, func_name_future, call_func, mod_name) = {
     let inputs = ast.sig.inputs.iter().collect::<Vec<&FnArg>>();
     let Some(Typed(info)) = inputs.get(0) else {
       return input_and_compile_error(func, syn::Error::new(ast.sig.inputs.span(), "no info"));
@@ -87,12 +87,18 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
         proc_macro2::Span::call_site(),
       ),
       call_func,
+      Ident::new(
+        &format!("__{func_name}_mod"),
+        proc_macro2::Span::call_site(),
+      ),
     )
   };
 
   let output = quote! {
     #[allow(non_camel_case_types, missing_docs)]
+    pub struct #func_name;
 
+    #[allow(non_camel_case_types, missing_docs)]
     pub struct #func_name_future {
       inner: std::pin::Pin<Box<dyn mysh::futures::Future<Output = Result<(), mysh::error::Error>>>>,
     }
@@ -104,9 +110,6 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
         self.inner.as_mut().poll(cx)
       }
     }
-
-    #[allow(non_camel_case_types, missing_docs)]
-    pub struct #func_name;
 
     impl #func_name {
       #call_func
@@ -144,6 +147,7 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
         Ok(Box::pin(#func_name::call(info, args)))
       }
       fn help(&self) -> &'static str {
+        use mysh::command_arg::CommandArg;
         Args::display_help()
       }
     }
