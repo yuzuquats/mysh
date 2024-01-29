@@ -53,7 +53,7 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
     Ok(ast) => ast,
     Err(err) => return input_and_compile_error(func, err),
   };
-  let (info_ty, args_ty, info_ty_deref, args_ty_deref, func_name, func_name_future, call_func) = {
+  let (info_ty, args_ty, func_name, func_name_future, call_func) = {
     let inputs = ast.sig.inputs.iter().collect::<Vec<&FnArg>>();
     let Some(Typed(info)) = inputs.get(0) else {
       return input_and_compile_error(func, syn::Error::new(ast.sig.inputs.span(), "no info"));
@@ -61,16 +61,16 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
     let Some(Typed(args)) = inputs.get(1) else {
       return input_and_compile_error(func, syn::Error::new(ast.sig.inputs.span(), "no args"));
     };
-    let Type::Reference(info_ty) = &info.ty.deref() else {
+    if let Type::Reference(info_ty) = &info.ty.deref() {
       return input_and_compile_error(
         func,
-        syn::Error::new(ast.sig.inputs.span(), "info is not ref"),
+        syn::Error::new(ast.sig.inputs.span(), "info is a ref"),
       );
     };
-    let Type::Reference(args_ty) = &args.ty.deref() else {
+    if let Type::Reference(args_ty) = &args.ty.deref() {
       return input_and_compile_error(
         func,
-        syn::Error::new(ast.sig.inputs.span(), "info is not ref"),
+        syn::Error::new(ast.sig.inputs.span(), "info is a ref"),
       );
     };
 
@@ -79,10 +79,8 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
     call_func.sig.ident = Ident::new("call", ast.sig.ident.span());
 
     (
-      info_ty,
-      args_ty,
-      &info_ty.elem,
-      &args_ty.elem,
+      info.ty.deref(),
+      args.ty.deref(),
       func_name,
       Ident::new(
         &format!("__{func_name}_future"),
@@ -94,17 +92,16 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
 
   let output = quote! {
     #[allow(non_camel_case_types, missing_docs)]
+
     pub struct #func_name_future {
-      info: #info_ty_deref,
-      args: #args_ty_deref,
+      inner: std::pin::Pin<Box<dyn mysh::futures::Future<Output = Result<(), mysh::error::Error>>>>,
     }
 
     impl std::future::Future for #func_name_future {
       type Output = Result<(), mysh::error::Error>;
 
-      fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
-        let r = mysh::futures::executor::block_on(#func_name::call(&self.info, &self.args));
-        std::task::Poll::Ready(r)
+      fn poll(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
+        self.inner.as_mut().poll(cx)
       }
     }
 
@@ -115,18 +112,19 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
       #call_func
 
       fn future(info: #info_ty, args: #args_ty) -> #func_name_future {
-        #func_name_future { info: info.clone(), args: args.clone() }
+        let inner = Box::pin(#func_name::call(info, args));
+        #func_name_future { inner }
       }
     }
 
     impl std::ops::Deref for #func_name {
-      type Target = (dyn for<'a, 'b> Fn(&'a #info_ty_deref, &'b #args_ty_deref) -> #func_name_future);
+      type Target = (dyn Fn(#info_ty, #args_ty) -> #func_name_future);
       fn deref(&self) -> &Self::Target {
         &Self::future
       }
     }
 
-    impl mysh::command::CommandMetadata<#info_ty_deref> for #func_name {
+    impl mysh::command::CommandMetadata<#info_ty> for #func_name {
       fn name(&self) -> &'static str {
         #name
       }
@@ -136,10 +134,14 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
       fn long_description(&self) -> Option<&'static str> {
         #long_description
       }
-      fn call_with_argv(&self, info: #info_ty, argv: Vec<String>) -> Result<(), mysh::error::Error> {
+      fn call_with_argv(&self, info: #info_ty, argv: Vec<String>)
+      -> Result<
+          // std::pin::Pin<Box<dyn mysh::futures::Future<Output = Result<(), mysh::error::Error>>>>
+          std::pin::Pin<Box<dyn mysh::futures::Future<Output = Result<(), mysh::error::Error>>>>,
+          mysh::error::Error
+      > {
         let args = mysh::command_arg::parse_command_arg(argv)?;
-        let r = mysh::futures::executor::block_on(#func_name::call(info, &args));
-        Ok(())
+        Ok(Box::pin(#func_name::call(info, args)))
       }
       fn help(&self) -> &'static str {
         Args::display_help()

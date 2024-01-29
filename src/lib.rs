@@ -37,7 +37,7 @@ where
   let mut argv: Vec<String> = env::args().collect();
   if argv.len() > 1 {
     argv.remove(0);
-    commands.exec(info, argv).await?;
+    commands.exec(info.clone(), argv).await?;
     return Ok(());
   }
 
@@ -58,7 +58,7 @@ where
           .try_into_args()
           .map_err(|e| anyhow!("arg parse error >> {e}"))?;
 
-        let r = commands.exec(info, argv).await;
+        let r = commands.exec(info.clone(), argv).await;
         println!("command result: {r:?}");
       }
       Ok(Signal::CtrlD) | Ok(Signal::CtrlC) => {

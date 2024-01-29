@@ -1,4 +1,5 @@
 use colored::Colorize;
+use futures::future::BoxFuture;
 use futures::Future;
 
 pub use mysh_derive::*;
@@ -9,7 +10,11 @@ pub trait CommandMetadata<Info> {
   fn name(&self) -> &'static str;
   fn description(&self) -> &'static str;
   fn long_description(&self) -> Option<&'static str>;
-  fn call_with_argv(&self, info: &Info, argv: Vec<String>) -> Result<(), Error>;
+  fn call_with_argv(
+    &self,
+    info: Info,
+    argv: Vec<String>,
+  ) -> Result<std::pin::Pin<Box<dyn Future<Output = Result<(), Error>>>>, Error>;
   fn help(&self) -> &'static str;
 
   fn print_help(&self) {
@@ -58,11 +63,11 @@ where
 
   pub fn exec(
     &self,
-    info: &Info,
+    info: Info,
     argv: Vec<String>,
   ) -> impl Future<Output = Result<(), Error>> + '_ {
     // todo: something something need to make sure it's thread safe
-    self.exec_raw(info.clone(), argv)
+    self.exec_raw(info, argv)
   }
 }
 
@@ -92,7 +97,6 @@ impl<Info> CommandList<Info> {
       return Ok(());
     };
 
-    command.call_with_argv(&info, argv)?;
-    Ok(())
+    command.call_with_argv(info, argv)?.await
   }
 }
