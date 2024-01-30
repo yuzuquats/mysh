@@ -1,8 +1,7 @@
 use std::fs;
 
 use anyhow::anyhow;
-use mysh::command_arg::CommandArg;
-use mysh::{command, CommandArg};
+use mysh::macros::{command, CommandArg};
 use serde::{Deserialize, Serialize};
 
 use crate::UserInfo;
@@ -15,7 +14,7 @@ pub struct Args {}
   description = "list directory contents",
   long_description = "list directory contents"
 )]
-pub async fn ls(_: &UserInfo, _: &Args) -> Result<(), mysh::error::Error> {
+pub async fn ls(_: UserInfo, _: Args) -> Result<(), mysh::error::Error> {
   for path in fs::read_dir(".").map_err(|e| anyhow!("read_dir failed >> {e}"))? {
     match path {
       Ok(p) => {

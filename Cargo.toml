@@ -2,7 +2,7 @@
 workspace = { members = ["examples/simple", "mysh-derive"] }
 [package]
 name = "mysh"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 rust-version = "1.68"
 authors = [
@@ -12,7 +12,7 @@ description = "Scaffolding to build interactive shells"
 readme = "README.md"
 keywords = ["shell", "cli", "interactive", "terminal"]
 categories = ["command-line-interface"]
-license = "MIT OR Apache-2.0"
+license = "MIT"
 repository = "https://github.com/yuzuquats/mysh"
 
 [dependencies]

@@ -1,6 +1,3 @@
-#![feature(async_closure)]
-#![feature(associated_type_defaults)]
-
 use mysh::shell::Shell;
 use tokio;
 

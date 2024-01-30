@@ -1,5 +1,4 @@
-use mysh::command_arg::CommandArg;
-use mysh::{command, CommandArg};
+use mysh::macros::{command, CommandArg};
 use serde::Deserialize;
 
 use crate::UserInfo;
@@ -14,7 +13,7 @@ pub struct Args {
   description = "Prints hello world",
   long_description = "Prints hello world"
 )]
-pub async fn hello(_: &UserInfo, args: &Args) -> Result<(), mysh::error::Error> {
+pub async fn hello(_: UserInfo, args: Args) -> Result<(), mysh::error::Error> {
   println!("Hello {}", args.name);
   Ok(())
 }
