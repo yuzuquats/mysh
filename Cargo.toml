@@ -1,8 +1,8 @@
-workspace = { members = ["examples/simple", "mysh-derive"] }
 
+workspace = { members = ["examples/simple", "mysh-derive"] }
 [package]
 name = "mysh"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 rust-version = "1.68"
 authors = [
