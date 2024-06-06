@@ -1,4 +1,4 @@
-use mysh::shell::Shell;
+use mysh::Shell;
 use tokio;
 
 mod commands;

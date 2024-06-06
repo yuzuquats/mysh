@@ -11,7 +11,7 @@ futures = "0.3"
 ```
 
 ```rust
-use mysh::macros::{command, CommandArg};
+use mysh::{command, CommandArg};
 use serde::Deserialize;
 
 #[derive(CommandArg, Deserialize, Clone)]
@@ -24,14 +24,14 @@ pub struct Args {
   description = "Prints hello world",
   long_description = "Prints hello world" // optional
 )]
-pub async fn hello(_: UserInfo, args: Args) -> Result<(), mysh::error::Error> {
+pub async fn hello(_: UserInfo, args: Args) -> mysh::Result<()> {
   println!("Hello {}", args.name);
   Ok(())
 }
 ```
 
 ```rust
-use mysh::shell::Shell;
+use mysh::Shell;
 use tokio;
 
 #[derive(Clone)]

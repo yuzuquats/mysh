@@ -100,11 +100,11 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
 
     #[allow(non_camel_case_types, missing_docs)]
     pub struct #func_name_future {
-      inner: std::pin::Pin<Box<dyn mysh::futures::Future<Output = Result<(), mysh::error::Error>>>>,
+      inner: std::pin::Pin<Box<dyn mysh::futures::Future<Output = mysh::Result<()>>>>,
     }
 
     impl std::future::Future for #func_name_future {
-      type Output = Result<(), mysh::error::Error>;
+      type Output = mysh::Result<()>;
 
       fn poll(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
         self.inner.as_mut().poll(cx)
@@ -127,7 +127,7 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
       }
     }
 
-    impl mysh::command::CommandMetadata<#info_ty> for #func_name {
+    impl mysh::CommandMetadata<#info_ty> for #func_name {
       fn name(&self) -> &'static str {
         #name
       }
@@ -138,16 +138,14 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
         #long_description
       }
       fn call_with_argv(&self, info: #info_ty, argv: Vec<String>)
-      -> Result<
-          // std::pin::Pin<Box<dyn mysh::futures::Future<Output = Result<(), mysh::error::Error>>>>
-          std::pin::Pin<Box<dyn mysh::futures::Future<Output = Result<(), mysh::error::Error>>>>,
-          mysh::error::Error
+      -> mysh::Result<
+          std::pin::Pin<Box<dyn mysh::futures::Future<Output = mysh::Result<()>>>>
       > {
-        let args = mysh::command_arg::parse_command_arg(argv)?;
+        let args = mysh::parse_arguments(argv)?;
         Ok(Box::pin(#func_name::call(info, args)))
       }
       fn help(&self) -> &'static str {
-        use mysh::command_arg::CommandArg;
+        use mysh::CommandArg;
         Args::display_help()
       }
     }

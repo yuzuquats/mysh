@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use reedline::{DefaultPrompt, DefaultPromptSegment, Prompt};
 
-use crate::command::{CommandList, CommandMetadata};
+use crate::{command_list::CommandList, command_metadata::CommandMetadata};
 
 pub struct Shell<Info>
 where

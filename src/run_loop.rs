@@ -1,8 +1,8 @@
+use crate::command_list::CommandList;
 use crate::tokenizer::IntoArgs;
 use crate::{command, error::Error};
 use anyhow::anyhow;
 use colored::Colorize;
-use command::CommandList;
 use reedline::{Prompt, Reedline, Signal};
 use std::env;
 

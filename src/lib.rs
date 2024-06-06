@@ -1,13 +1,15 @@
-pub mod command;
-pub mod command_arg;
-pub mod error;
-pub mod run_loop;
-pub mod shell;
+mod command_arg;
+mod command_list;
+mod command_metadata;
+mod error;
+mod run_loop;
+mod shell;
 mod tokenizer;
 
+pub use mysh_derive::*;
+pub use shell::Shell;
+
+pub use command_arg::{parse_arguments, CommandArg};
+pub use command_metadata::CommandMetadata;
+pub use error::{Error, Result};
 pub use futures;
-extern crate mysh_derive;
-pub mod macros {
-  pub use mysh_derive::command;
-  pub use mysh_derive::CommandArg;
-}

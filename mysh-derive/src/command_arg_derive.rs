@@ -24,7 +24,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
   let name = input.ident;
   let expanded = quote! {
-    impl mysh::command_arg::CommandArg for #name {
+    impl mysh::CommandArg for #name {
       fn display_help() -> &'static str {
           #args
       }

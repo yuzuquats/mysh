@@ -5,7 +5,7 @@ pub trait CommandArg {
   fn display_help() -> &'static str;
 }
 
-pub fn parse_command_arg<T>(argv: Vec<String>) -> Result<T, anyhow::Error>
+pub fn parse_arguments<T>(argv: Vec<String>) -> Result<T, anyhow::Error>
 where
   T: de::DeserializeOwned,
 {
