@@ -1,6 +1,15 @@
-use crate::error::Error;
+use crate::{error::Error, CommandArg};
 use colored::Colorize;
 use futures::Future;
+
+#[derive(Clone)]
+pub struct DefaultArg;
+
+impl CommandArg for DefaultArg {
+  fn display_help() -> &'static str {
+    todo!()
+  }
+}
 
 pub trait CommandMetadata<Info> {
   fn name(&self) -> &'static str;

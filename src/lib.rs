@@ -1,3 +1,5 @@
+#![feature(associated_type_defaults)]
+
 mod command_arg;
 mod command_list;
 mod command_metadata;
@@ -7,9 +9,9 @@ mod shell;
 mod tokenizer;
 
 pub use mysh_derive::*;
-pub use shell::Shell;
 
 pub use command_arg::{parse_arguments, CommandArg};
 pub use command_metadata::CommandMetadata;
 pub use error::{Error, Result};
 pub use futures;
+pub use shell::{Shell, SubcommandList};

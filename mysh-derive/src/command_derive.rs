@@ -146,7 +146,7 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
       }
       fn help(&self) -> &'static str {
         use mysh::CommandArg;
-        Args::display_help()
+        #args_ty::display_help()
       }
     }
   };
