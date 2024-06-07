@@ -81,7 +81,7 @@ where
   pub fn new(info: Info) -> Self {
     let prompt = DefaultPrompt {
       left_prompt: DefaultPromptSegment::Empty,
-      right_prompt: DefaultPromptSegment::CurrentDateTime,
+      right_prompt: DefaultPromptSegment::Empty,
     };
     Shell {
       info,
