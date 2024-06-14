@@ -1,10 +1,10 @@
-use std::{collections::HashMap, ops::Deref};
+use std::{collections::HashMap, env, ops::Deref};
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use futures::Future;
-use reedline::{DefaultPrompt, DefaultPromptSegment, Prompt};
+use reedline::{DefaultPrompt, DefaultPromptSegment, FileBackedHistory, Prompt, Reedline};
 
-use crate::{command_list::CommandList, command_metadata::CommandMetadata};
+use crate::{command_list::CommandList, command_metadata::CommandMetadata, run_loop::LineReader};
 
 pub trait Callable {
   fn call_with_argv(
@@ -71,7 +71,7 @@ where
   info: Info,
   commands: CommandList<Info>,
   subcommands: HashMap<String, Box<dyn Callable>>,
-  prompt: Box<dyn Prompt>,
+  linereader: Option<Box<dyn LineReader>>,
 }
 
 impl<Info> Shell<Info>
@@ -79,23 +79,19 @@ where
   Info: Clone,
 {
   pub fn new(info: Info) -> Self {
-    let prompt = DefaultPrompt {
-      left_prompt: DefaultPromptSegment::Empty,
-      right_prompt: DefaultPromptSegment::Empty,
-    };
     Shell {
       info,
       commands: CommandList::new(),
-      prompt: Box::new(prompt),
+      linereader: None,
       subcommands: HashMap::new(),
     }
   }
 
-  pub fn set_prompt<P>(mut self, prompt: P) -> Self
+  pub fn set_line_reader<P>(mut self, linereader: P) -> Self
   where
-    P: Prompt + Sized + 'static,
+    P: LineReader + Sized + 'static,
   {
-    self.prompt = Box::new(prompt);
+    self.linereader = Some(Box::new(linereader));
     self
   }
 
@@ -126,8 +122,47 @@ where
       self.info,
       self.commands,
       self.subcommands,
-      self.prompt.deref(),
+      &mut (*self
+        .linereader
+        .unwrap_or_else(|| Box::new(DefaultLineReader::new()))),
     )
     .await;
+  }
+}
+
+pub struct DefaultLineReader {
+  reedline: Reedline,
+  prompt: Box<dyn Prompt>,
+}
+
+impl DefaultLineReader {
+  pub fn new() -> DefaultLineReader {
+    let prompt = DefaultPrompt {
+      left_prompt: DefaultPromptSegment::Empty,
+      right_prompt: DefaultPromptSegment::Empty,
+    };
+
+    let path = env::current_dir().expect("");
+    println!("The current directory is {}", path.display());
+
+    let history = Box::new(
+      FileBackedHistory::with_file(5, "history.txt".into())
+        .expect("Error configuring history with file"),
+    );
+    let reedline = Reedline::create()
+      // .with_completer(completer)
+      // .with_partial_completions(partial_completions)
+      .with_history(history);
+
+    DefaultLineReader {
+      reedline,
+      prompt: Box::new(prompt),
+    }
+  }
+}
+
+impl LineReader for DefaultLineReader {
+  fn read_line(&mut self) -> anyhow::Result<reedline::Signal> {
+    self.reedline.read_line(self.prompt.deref()).context("")
   }
 }

@@ -7,16 +7,21 @@ use colored::Colorize;
 use reedline::{Prompt, Reedline, Signal};
 use std::collections::HashMap;
 use std::env;
+use std::ops::Deref;
+
+pub trait LineReader {
+  fn read_line(&mut self) -> anyhow::Result<Signal>;
+}
 
 pub async fn run<Info>(
   info: Info,
   commands: CommandList<Info>,
   subcommands: HashMap<String, Box<dyn Callable>>,
-  prompt: &dyn Prompt,
+  line_reader: &mut (impl LineReader + ?Sized),
 ) where
   Info: Clone,
 {
-  if let Err(e) = run_once_or_loop(&info, commands, subcommands, prompt).await {
+  if let Err(e) = run_once_or_loop(&info, commands, subcommands, line_reader).await {
     println!("{} {}", "[Error]".red(), e);
   }
 }
@@ -25,7 +30,7 @@ async fn run_once_or_loop<Info>(
   info: &Info,
   commands: CommandList<Info>,
   subcommands: HashMap<String, Box<dyn Callable>>,
-  prompt: &dyn Prompt,
+  line_reader: &mut (impl LineReader + ?Sized),
 ) -> Result<(), Error>
 where
   Info: Clone,
@@ -39,9 +44,8 @@ where
 
   println!("argv: {:?}", argv);
 
-  let mut line_editor = Reedline::create();
   loop {
-    let sig = line_editor.read_line(prompt);
+    let sig = line_reader.read_line();
 
     match sig {
       Ok(Signal::Success(buffer)) => {
