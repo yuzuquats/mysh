@@ -23,7 +23,11 @@ where
   }
 
   pub fn print_help(&self, level: usize) {
-    for (_name, command) in &self.commands {
+    let mut keys: Vec<_> = self.commands.keys().collect();
+    keys.sort();
+
+    for key in keys {
+      let command = self.commands.get(key).expect("");
       self.print_indent(level);
       println!("{:10} {}", command.name().bold(), command.description());
       if command.help().len() > 0 {
