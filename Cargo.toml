@@ -28,3 +28,4 @@ serde_json = "1.0.111"
 mysh_derive = { version = "0.1.6", path = "./mysh-derive" }
 thiserror = "1.0.56"
 reedline = "0.28.0"
+uuid = "1.10.0"

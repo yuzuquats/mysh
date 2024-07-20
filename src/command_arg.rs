@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use serde::de;
+use uuid::Uuid;
 
 pub trait CommandArg {
   fn display_help() -> Vec<&'static str>;
@@ -26,6 +27,12 @@ impl CommandArg for i32 {
 impl CommandArg for f32 {
   fn display_help() -> Vec<&'static str> {
     vec!["[f32]"]
+  }
+}
+
+impl CommandArg for Uuid {
+  fn display_help() -> Vec<&'static str> {
+    vec!["[uuid]"]
   }
 }
 
