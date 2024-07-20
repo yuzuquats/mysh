@@ -2,37 +2,64 @@ use anyhow::anyhow;
 use serde::de;
 
 pub trait CommandArg {
-  fn display_help() -> &'static str;
+  fn display_help() -> Vec<&'static str>;
 }
 
 impl CommandArg for String {
-  fn display_help() -> &'static str {
-    "[string]"
+  fn display_help() -> Vec<&'static str> {
+    vec!["[string]"]
   }
 }
 
 impl CommandArg for i64 {
-  fn display_help() -> &'static str {
-    "[i64]"
+  fn display_help() -> Vec<&'static str> {
+    vec!["[i64]"]
   }
 }
 
 impl CommandArg for i32 {
-  fn display_help() -> &'static str {
-    "[i32]"
+  fn display_help() -> Vec<&'static str> {
+    vec!["[i32]"]
   }
 }
 
 impl CommandArg for f32 {
-  fn display_help() -> &'static str {
-    "[f32]"
+  fn display_help() -> Vec<&'static str> {
+    vec!["[f32]"]
+  }
+}
+
+impl<T> CommandArg for Option<T>
+where
+  T: CommandArg,
+{
+  fn display_help() -> Vec<&'static str> {
+    // @todo: properly format
+    // let inner = T::display_help();
+    // if inner.len() == 1 && let Some(first) = inner.get(0) && !first.starts_with("--") {
+    //   return vec![format]
+    // }
+    let help = &mut T::display_help();
+    if help.len() == 0 {
+      return vec![];
+    }
+
+    let mut opt = vec!["<Optional>"];
+    opt.append(help);
+    opt
   }
 }
 
 pub fn parse_arguments<T>(argv: Vec<String>) -> Result<T, anyhow::Error>
 where
-  T: de::DeserializeOwned,
+  T: de::DeserializeOwned + CommandArg,
 {
+  // println!("--argv {:#?}", argv);
+
+  if argv.len() == 1 {
+    return Ok(serde_json::from_str("null")?);
+  }
+
   if argv.len() == 2 {
     let only = argv.get(1).expect("");
     let ser = serde_json::to_string(&only)?;

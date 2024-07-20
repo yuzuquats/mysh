@@ -4,10 +4,9 @@ use crate::shell::Callable;
 use crate::tokenizer::IntoArgs;
 use anyhow::anyhow;
 use colored::Colorize;
-use reedline::{Prompt, Reedline, Signal};
+use reedline::Signal;
 use std::collections::HashMap;
 use std::env;
-use std::ops::Deref;
 
 pub trait LineReader {
   fn read_line(&mut self) -> anyhow::Result<Signal>;

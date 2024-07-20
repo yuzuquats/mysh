@@ -14,4 +14,5 @@ pub use command_arg::{parse_arguments, CommandArg};
 pub use command_metadata::CommandMetadata;
 pub use error::{Error, Result};
 pub use futures;
+pub use shell::{DefaultLineReader, PromptText};
 pub use shell::{Shell, SubcommandList};

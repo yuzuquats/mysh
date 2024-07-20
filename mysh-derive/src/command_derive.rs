@@ -6,7 +6,7 @@ use proc_macro2::{Delimiter, Group};
 use quote::{quote, ToTokens};
 use syn::FnArg::{self, Typed};
 use syn::{parse_macro_input, spanned::Spanned, Ident, LitStr};
-use syn::{ItemFn, Type};
+use syn::{AngleBracketedGenericArguments, GenericArgument, ItemFn, PathArguments, Type};
 
 pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
   let (name, description, long_description) = {
@@ -53,7 +53,7 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
     Ok(ast) => ast,
     Err(err) => return input_and_compile_error(func, err),
   };
-  let (info_ty, args_ty, func_name, func_name_future, call_func, mod_name) = {
+  let (info_ty, args_ty_turbo, args_ty, func_name, func_name_future, call_func, mod_name) = {
     let inputs = ast.sig.inputs.iter().collect::<Vec<&FnArg>>();
     let Some(Typed(info)) = inputs.get(0) else {
       return input_and_compile_error(func, syn::Error::new(ast.sig.inputs.span(), "no info"));
@@ -78,8 +78,11 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
     let mut call_func = ast.clone();
     call_func.sig.ident = Ident::new("call", ast.sig.ident.span());
 
+    let args_ty_turbo = type_to_turbo_fish(args.ty.deref());
+
     (
       info.ty.deref(),
+      syn::parse_str::<Type>(&args_ty_turbo).expect("couldn't parse args"),
       args.ty.deref(),
       func_name,
       Ident::new(
@@ -144,9 +147,9 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
         let args = mysh::parse_arguments(argv)?;
         Ok(Box::pin(#func_name::call(info, args)))
       }
-      fn help(&self) -> &'static str {
+      fn help(&self) -> Vec<&'static str> {
         use mysh::CommandArg;
-        #args_ty::display_help()
+        #args_ty_turbo::display_help()
       }
     }
   };
@@ -164,4 +167,46 @@ fn input_and_compile_error(mut item: TokenStream, err: syn::Error) -> TokenStrea
   let compile_err = TokenStream::from(err.to_compile_error());
   item.extend(compile_err);
   item
+}
+
+fn type_to_turbo_fish(ty: &Type) -> String {
+  match ty {
+    Type::Path(type_path) => {
+      let segments = &type_path.path.segments;
+      let mut result = String::new();
+
+      for (i, segment) in segments.iter().enumerate() {
+        if i > 0 {
+          result.push_str("::");
+        }
+        result.push_str(&segment.ident.to_string());
+
+        if let PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. }) =
+          &segment.arguments
+        {
+          if !args.is_empty() {
+            result.push_str("::<");
+            for (j, arg) in args.iter().enumerate() {
+              if j > 0 {
+                result.push_str(", ");
+              }
+              result.push_str(&match arg {
+                GenericArgument::Type(arg_ty) => quote::quote!(#arg_ty).to_string(),
+                GenericArgument::Lifetime(lt) => quote::quote!(#lt).to_string(),
+                GenericArgument::Const(c) => quote::quote!(#c).to_string(),
+                GenericArgument::Constraint(c) => quote::quote!(#c).to_string(),
+                GenericArgument::AssocType(t) => quote::quote!(#t).to_string(),
+                GenericArgument::AssocConst(c) => quote::quote!(#c).to_string(),
+                _ => todo!(),
+              });
+            }
+            result.push('>');
+          }
+        }
+      }
+
+      result
+    }
+    _ => panic!("Unsupported type"),
+  }
 }

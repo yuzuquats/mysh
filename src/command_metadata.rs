@@ -6,8 +6,14 @@ use futures::Future;
 pub struct DefaultArg;
 
 impl CommandArg for DefaultArg {
-  fn display_help() -> &'static str {
-    todo!()
+  fn display_help() -> Vec<&'static str> {
+    vec![]
+  }
+}
+
+impl CommandArg for () {
+  fn display_help() -> Vec<&'static str> {
+    vec![]
   }
 }
 
@@ -20,7 +26,7 @@ pub trait CommandMetadata<Info> {
     info: Info,
     argv: Vec<String>,
   ) -> Result<std::pin::Pin<Box<dyn Future<Output = Result<(), Error>>>>, Error>;
-  fn help(&self) -> &'static str;
+  fn help(&self) -> Vec<&'static str>;
 
   fn print_help(&self) {
     let options = self.help();
@@ -38,7 +44,7 @@ pub trait CommandMetadata<Info> {
     );
     if options.len() > 0 {
       println!("{}", "Options:".bold());
-      for option in options.split_whitespace() {
+      for option in options {
         println!("    {}", option);
       }
     }

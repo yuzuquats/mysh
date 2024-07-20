@@ -1,8 +1,18 @@
-use std::{collections::HashMap, env, ops::Deref};
+use std::{
+  borrow::Cow,
+  cell::RefCell,
+  collections::HashMap,
+  env,
+  ops::Deref,
+  sync::{Arc, RwLock},
+};
 
 use anyhow::{anyhow, Context};
 use futures::Future;
-use reedline::{DefaultPrompt, DefaultPromptSegment, FileBackedHistory, Prompt, Reedline};
+use reedline::{
+  DefaultPrompt, DefaultPromptSegment, FileBackedHistory, Prompt, PromptHistorySearchStatus,
+  Reedline,
+};
 
 use crate::{command_list::CommandList, command_metadata::CommandMetadata, run_loop::LineReader};
 
@@ -130,23 +140,78 @@ where
   }
 }
 
+#[derive(Clone)]
+pub struct PromptText(Arc<RwLock<Option<String>>>);
+
+impl PromptText {
+  pub fn new() -> PromptText {
+    PromptText(Arc::new(RwLock::new(None)))
+  }
+
+  pub fn set(&self, t: Option<String>) {
+    *self.0.write().expect("") = t;
+  }
+
+  pub fn render_as_reedline_prompt(&self) -> DefaultPrompt {
+    DefaultPrompt {
+      left_prompt: match self.0.read().expect("").clone() {
+        Some(t) => DefaultPromptSegment::Basic(t),
+        None => DefaultPromptSegment::Empty,
+      },
+      right_prompt: DefaultPromptSegment::Empty,
+    }
+  }
+}
+
+impl Prompt for PromptText {
+  fn render_prompt_left(&self) -> std::borrow::Cow<str> {
+    Cow::Owned(self.0.read().expect("").clone().unwrap_or("".to_string()))
+  }
+
+  fn render_prompt_right(&self) -> std::borrow::Cow<str> {
+    Cow::Borrowed("")
+  }
+
+  fn render_prompt_indicator(
+    &self,
+    prompt_mode: reedline::PromptEditMode,
+  ) -> std::borrow::Cow<str> {
+    Cow::Borrowed(" || ")
+  }
+
+  fn render_prompt_multiline_indicator(&self) -> std::borrow::Cow<str> {
+    Cow::Borrowed("::: ")
+  }
+
+  fn render_prompt_history_search_indicator(
+    &self,
+    history_search: reedline::PromptHistorySearch,
+  ) -> std::borrow::Cow<str> {
+    let prefix = match history_search.status {
+      PromptHistorySearchStatus::Passing => "",
+      PromptHistorySearchStatus::Failing => "failing ",
+    };
+    // NOTE: magic strings, given there is logic on how these compose I am not sure if it
+    // is worth extracting in to static constant
+    Cow::Owned(format!(
+      "({}reverse-search: {}) ",
+      prefix, history_search.term
+    ))
+  }
+}
+
 pub struct DefaultLineReader {
   reedline: Reedline,
-  prompt: Box<dyn Prompt>,
+  pub prompt: PromptText,
 }
 
 impl DefaultLineReader {
   pub fn new() -> DefaultLineReader {
-    let prompt = DefaultPrompt {
-      left_prompt: DefaultPromptSegment::Empty,
-      right_prompt: DefaultPromptSegment::Empty,
-    };
-
     let path = env::current_dir().expect("");
     println!("The current directory is {}", path.display());
 
     let history = Box::new(
-      FileBackedHistory::with_file(5, "history.txt".into())
+      FileBackedHistory::with_file(100, "history.txt".into())
         .expect("Error configuring history with file"),
     );
     let reedline = Reedline::create()
@@ -156,13 +221,13 @@ impl DefaultLineReader {
 
     DefaultLineReader {
       reedline,
-      prompt: Box::new(prompt),
+      prompt: PromptText::new(),
     }
   }
 }
 
 impl LineReader for DefaultLineReader {
   fn read_line(&mut self) -> anyhow::Result<reedline::Signal> {
-    self.reedline.read_line(self.prompt.deref()).context("")
+    self.reedline.read_line(&self.prompt).context("")
   }
 }
