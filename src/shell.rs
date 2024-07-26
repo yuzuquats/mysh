@@ -1,9 +1,7 @@
 use std::{
   borrow::Cow,
-  cell::RefCell,
   collections::HashMap,
   env,
-  ops::Deref,
   sync::{Arc, RwLock},
 };
 
@@ -13,6 +11,7 @@ use reedline::{
   DefaultPrompt, DefaultPromptSegment, FileBackedHistory, Prompt, PromptHistorySearchStatus,
   Reedline,
 };
+use serde_json::Value;
 
 use crate::{command_list::CommandList, command_metadata::CommandMetadata, run_loop::LineReader};
 
@@ -20,7 +19,7 @@ pub trait Callable {
   fn call_with_argv(
     &self,
     argv: Vec<String>,
-  ) -> crate::Result<std::pin::Pin<Box<dyn Future<Output = crate::Result<()>>>>>;
+  ) -> crate::Result<std::pin::Pin<Box<dyn Future<Output = crate::Result<Value>>>>>;
 
   fn print_help(&self);
 }
@@ -51,13 +50,27 @@ where
     self.commands.add_command(command);
     self
   }
+
+  pub async fn run_command(&self, command: &str) -> crate::Result<crate::json::Value> {
+    let argv = command
+      .split(" ")
+      .map(|s| s.to_string())
+      .collect::<Vec<String>>();
+
+    let subcommand_name = argv.get(0).ok_or(anyhow!("Command name not found"))?;
+    let subcommand = self.commands.find_command(&subcommand_name).ok_or(anyhow!(
+      "No such subcommand. ie. ./[bin] [command] [subcommand]"
+    ))?;
+
+    Ok(subcommand.call_with_argv(self.info.clone(), argv)?.await?)
+  }
 }
 
 impl<T: Clone> Callable for SubcommandList<T> {
   fn call_with_argv(
     &self,
     argv: Vec<String>,
-  ) -> crate::Result<std::pin::Pin<Box<dyn Future<Output = crate::Result<()>>>>> {
+  ) -> crate::Result<std::pin::Pin<Box<dyn Future<Output = crate::Result<Value>>>>> {
     let subcommand_name = argv.get(1).ok_or(anyhow!(
       "Please provide a subcommand. ie. ./[bin] [command] [subcommand]"
     ))?;

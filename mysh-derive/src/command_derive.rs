@@ -103,11 +103,11 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
 
     #[allow(non_camel_case_types, missing_docs)]
     pub struct #func_name_future {
-      inner: std::pin::Pin<Box<dyn mysh::futures::Future<Output = mysh::Result<()>>>>,
+      inner: std::pin::Pin<Box<dyn mysh::futures::Future<Output = mysh::Result<mysh::json::Value>>>>,
     }
 
     impl std::future::Future for #func_name_future {
-      type Output = mysh::Result<()>;
+      type Output = mysh::Result<mysh::json::Value>;
 
       fn poll(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
         self.inner.as_mut().poll(cx)
@@ -118,7 +118,11 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
       #call_func
 
       fn future(info: #info_ty, args: #args_ty) -> #func_name_future {
-        let inner = Box::pin(#func_name::call(info, args));
+        use anyhow::Context;
+        let inner = Box::pin(async move {
+          let r = #func_name::call(info, args).await?;
+          Ok(mysh::json::to_value(r).context("Return value not json-able")?)
+        });
         #func_name_future { inner }
       }
     }
@@ -142,10 +146,14 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
       }
       fn call_with_argv(&self, info: #info_ty, argv: Vec<String>)
       -> mysh::Result<
-          std::pin::Pin<Box<dyn mysh::futures::Future<Output = mysh::Result<()>>>>
+          std::pin::Pin<Box<dyn mysh::futures::Future<Output = mysh::Result<mysh::json::Value>>>>
       > {
+        use anyhow::Context;
         let args = mysh::parse_arguments(argv)?;
-        Ok(Box::pin(#func_name::call(info, args)))
+        Ok(Box::pin(async move {
+          let r = #func_name::call(info, args).await?;
+          Ok(mysh::json::to_value(r).context("Return value not json-able")?)
+        }))
       }
       fn help(&self) -> Vec<&'static str> {
         use mysh::CommandArg;

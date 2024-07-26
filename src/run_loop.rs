@@ -5,6 +5,7 @@ use crate::tokenizer::IntoArgs;
 use anyhow::anyhow;
 use colored::Colorize;
 use reedline::Signal;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
 
@@ -80,12 +81,12 @@ async fn exec<Info: Clone>(
   commands: &CommandList<Info>,
   subcommands: &HashMap<String, Box<dyn Callable>>,
   argv: Vec<String>,
-) -> crate::Result<()> {
+) -> crate::Result<Value> {
   let name = &argv.get(0).expect("").clone();
   if name == "help" {
     let Some(help_arg) = argv.get(1) else {
       print_help(commands, subcommands);
-      return Ok(());
+      return Ok(().into());
     };
 
     let command = commands
@@ -93,7 +94,7 @@ async fn exec<Info: Clone>(
       .ok_or(anyhow!("Command not found: {help_arg}"))?;
 
     command.print_help();
-    return Ok(());
+    return Ok(().into());
   }
 
   if let Some(command) = commands.find_command(&name) {
@@ -105,7 +106,7 @@ async fn exec<Info: Clone>(
   }
 
   print_help(commands, subcommands);
-  Ok(())
+  Ok(().into())
 }
 
 pub fn print_help<Info: Clone>(

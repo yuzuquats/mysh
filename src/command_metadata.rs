@@ -1,6 +1,7 @@
 use crate::{error::Error, CommandArg};
 use colored::Colorize;
 use futures::Future;
+use serde_json::Value;
 
 #[derive(Clone)]
 pub struct DefaultArg;
@@ -25,7 +26,7 @@ pub trait CommandMetadata<Info> {
     &self,
     info: Info,
     argv: Vec<String>,
-  ) -> Result<std::pin::Pin<Box<dyn Future<Output = Result<(), Error>>>>, Error>;
+  ) -> Result<std::pin::Pin<Box<dyn Future<Output = Result<Value, Error>>>>, Error>;
   fn help(&self) -> Vec<&'static str>;
 
   fn print_help(&self) {

@@ -16,3 +16,8 @@ pub use error::{Error, Result};
 pub use futures;
 pub use shell::{DefaultLineReader, PromptText};
 pub use shell::{Shell, SubcommandList};
+
+pub mod json {
+  pub use serde_json::to_value;
+  pub use serde_json::Value;
+}
