@@ -53,7 +53,7 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
     Ok(ast) => ast,
     Err(err) => return input_and_compile_error(func, err),
   };
-  let (info_ty, args_ty_turbo, args_ty, func_name, func_name_future, call_func, mod_name) = {
+  let (info_ty, args_ty_turbo, args_ty, func_name, func_name_future, call_func) = {
     let inputs = ast.sig.inputs.iter().collect::<Vec<&FnArg>>();
     let Some(Typed(info)) = inputs.get(0) else {
       return input_and_compile_error(func, syn::Error::new(ast.sig.inputs.span(), "no info"));
@@ -61,13 +61,13 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
     let Some(Typed(args)) = inputs.get(1) else {
       return input_and_compile_error(func, syn::Error::new(ast.sig.inputs.span(), "no args"));
     };
-    if let Type::Reference(info_ty) = &info.ty.deref() {
+    if let Type::Reference(_) = &info.ty.deref() {
       return input_and_compile_error(
         func,
         syn::Error::new(ast.sig.inputs.span(), "info is a ref"),
       );
     };
-    if let Type::Reference(args_ty) = &args.ty.deref() {
+    if let Type::Reference(_) = &args.ty.deref() {
       return input_and_compile_error(
         func,
         syn::Error::new(ast.sig.inputs.span(), "info is a ref"),
@@ -90,10 +90,6 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
         proc_macro2::Span::call_site(),
       ),
       call_func,
-      Ident::new(
-        &format!("__{func_name}_mod"),
-        proc_macro2::Span::call_site(),
-      ),
     )
   };
 
