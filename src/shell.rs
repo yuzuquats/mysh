@@ -187,7 +187,7 @@ impl Prompt for PromptText {
 
   fn render_prompt_indicator(
     &self,
-    prompt_mode: reedline::PromptEditMode,
+    _prompt_mode: reedline::PromptEditMode,
   ) -> std::borrow::Cow<str> {
     Cow::Borrowed(" || ")
   }
