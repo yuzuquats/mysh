@@ -1,7 +1,6 @@
 use std::{
   borrow::Cow,
   collections::HashMap,
-  env,
   sync::{Arc, RwLock},
 };
 
@@ -220,9 +219,6 @@ pub struct DefaultLineReader {
 
 impl DefaultLineReader {
   pub fn new() -> DefaultLineReader {
-    let path = env::current_dir().expect("");
-    println!("The current directory is {}", path.display());
-
     let history = Box::new(
       FileBackedHistory::with_file(100, "history.txt".into())
         .expect("Error configuring history with file"),
