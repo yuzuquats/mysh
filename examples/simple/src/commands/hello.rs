@@ -5,7 +5,7 @@ use crate::UserInfo;
 
 #[derive(CommandArg, Deserialize, Clone, Debug)]
 pub struct Args {
-  name: String,
+  _name: String,
 }
 
 #[command(
