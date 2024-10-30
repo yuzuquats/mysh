@@ -22,7 +22,7 @@ pub async fn run<Info>(
   Info: Clone,
 {
   if let Err(e) = run_once_or_loop(&info, commands, subcommands, line_reader).await {
-    println!("{} {}", "[Error]".red(), e);
+    println!("{} {:#?}", "[Error]".red(), e);
   }
 }
 
@@ -60,7 +60,7 @@ where
 
         match exec(info, &commands, &subcommands, argv).await {
           Ok(_) => {}
-          Err(e) => println!("{} {}", "[Error]".red(), e),
+          Err(e) => println!("{} {:#?}", "[Error]".red(), e),
         }
       }
       Ok(Signal::CtrlD) | Ok(Signal::CtrlC) => {
