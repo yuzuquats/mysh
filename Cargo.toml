@@ -26,7 +26,7 @@ ctrlc = "3.4.2"
 futures = {workspace = true}
 indoc = "2.0.4"
 
-mysh_derive = {version = "0.1.6", path = "./mysh-derive"}
+mysh_derive = {version = "0.1.7", path = "./mysh-derive"}
 reedline = "0.36.0"
 serde = "1.0.214"
 serde-reflection = "0.4.0"
