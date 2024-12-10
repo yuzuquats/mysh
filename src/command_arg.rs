@@ -69,6 +69,13 @@ where
 
   if argv.len() == 2 {
     let only = argv.get(1).expect("");
+
+    // Deserializing directly implies primitive (i32, i64, etc)
+    //
+    if let Ok(only) = serde_json::from_str(&only) {
+      return Ok(only);
+    };
+
     let ser = serde_json::to_string(&only)?;
     return Ok(serde_json::from_str(&ser)?);
   }
@@ -107,5 +114,5 @@ where
     }
   }
   let ser = serde_json::to_string(&map)?;
-  return Ok(serde_json::from_str(&ser)?);
+  Ok(serde_json::from_str(&ser)?)
 }

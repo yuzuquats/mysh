@@ -2,6 +2,7 @@ use crate::command_list::CommandList;
 use crate::error::Error;
 use crate::shell::Callable;
 use crate::tokenizer::IntoArgs;
+use crate::Scripts;
 use anyhow::anyhow;
 use colored::Colorize;
 use reedline::Signal;
@@ -14,21 +15,19 @@ pub trait LineReader {
 }
 
 pub async fn run<Info>(
-  info: Info,
-  commands: CommandList<Info>,
+  scripts: Scripts<Info>,
   subcommands: HashMap<String, Box<dyn Callable>>,
   line_reader: &mut (impl LineReader + ?Sized),
 ) where
   Info: Clone,
 {
-  if let Err(e) = run_once_or_loop(&info, commands, subcommands, line_reader).await {
+  if let Err(e) = run_once_or_loop(&scripts, subcommands, line_reader).await {
     println!("{} {:#?}", "[Error]".red(), e);
   }
 }
 
 async fn run_once_or_loop<Info>(
-  info: &Info,
-  commands: CommandList<Info>,
+  scripts: &Scripts<Info>,
   subcommands: HashMap<String, Box<dyn Callable>>,
   line_reader: &mut (impl LineReader + ?Sized),
 ) -> Result<(), Error>
@@ -38,7 +37,7 @@ where
   let mut argv: Vec<String> = env::args().collect();
   if argv.len() > 1 {
     argv.remove(0);
-    exec(info, &commands, &subcommands, argv).await?;
+    exec(&scripts, &subcommands, argv).await?;
     return Ok(());
   }
 
@@ -58,7 +57,7 @@ where
           .try_into_args()
           .map_err(|e| anyhow!("arg parse error >> {e}"))?;
 
-        match exec(info, &commands, &subcommands, argv).await {
+        match exec(&scripts, &subcommands, argv).await {
           Ok(_) => {}
           Err(e) => println!("{} {:#?}", "[Error]".red(), e),
         }
@@ -77,19 +76,19 @@ where
 }
 
 async fn exec<Info: Clone>(
-  info: &Info,
-  commands: &CommandList<Info>,
+  scripts: &Scripts<Info>,
   subcommands: &HashMap<String, Box<dyn Callable>>,
   argv: Vec<String>,
 ) -> crate::Result<Value> {
   let name = &argv.get(0).expect("").clone();
   if name == "help" {
     let Some(help_arg) = argv.get(1) else {
-      print_help(commands, subcommands);
+      print_help(&scripts.commands, subcommands);
       return Ok(().into());
     };
 
-    let command = commands
+    let command = scripts
+      .commands
       .find_command(help_arg)
       .ok_or(anyhow!("Command not found: {help_arg}"))?;
 
@@ -97,15 +96,15 @@ async fn exec<Info: Clone>(
     return Ok(().into());
   }
 
-  if let Some(command) = commands.find_command(&name) {
-    return command.call_with_argv(info.clone(), argv)?.await;
+  if let Some(command) = scripts.commands.find_command(&name) {
+    return command.call_with_argv(scripts.info.clone(), argv)?.await;
   }
 
   if let Some(subcommand) = subcommands.get(name) {
     return subcommand.call_with_argv(argv)?.await;
   }
 
-  print_help(commands, subcommands);
+  print_help(&scripts.commands, subcommands);
   Ok(().into())
 }
 

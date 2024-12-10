@@ -23,23 +23,27 @@ pub trait Callable {
   fn print_help(&self);
 }
 
-pub struct SubcommandList<Info>
+pub struct Scripts<Info>
 where
   Info: Clone,
 {
-  info: Info,
-  commands: CommandList<Info>,
+  pub info: Info,
+  pub commands: CommandList<Info>,
 }
 
-impl<Info> SubcommandList<Info>
+impl<Info> Scripts<Info>
 where
   Info: Clone,
 {
   pub fn new(info: Info) -> Self {
-    SubcommandList {
+    Scripts {
       info,
       commands: CommandList::new(),
     }
+  }
+
+  pub async fn run(self) {
+    crate::run_loop::run(self, HashMap::new(), &mut DefaultLineReader::new()).await;
   }
 
   pub fn add_command<C>(mut self, command: C) -> Self
@@ -65,7 +69,7 @@ where
   }
 }
 
-impl<T: Clone> Callable for SubcommandList<T> {
+impl<T: Clone> Callable for Scripts<T> {
   fn call_with_argv(
     &self,
     argv: Vec<String>,
@@ -90,8 +94,7 @@ pub struct Shell<Info>
 where
   Info: Clone,
 {
-  info: Info,
-  commands: CommandList<Info>,
+  root_scripts: Scripts<Info>,
   subcommands: HashMap<String, Box<dyn Callable>>,
   linereader: Option<Box<dyn LineReader>>,
 }
@@ -102,8 +105,7 @@ where
 {
   pub fn new(info: Info) -> Self {
     Shell {
-      info,
-      commands: CommandList::new(),
+      root_scripts: Scripts::new(info),
       linereader: None,
       subcommands: HashMap::new(),
     }
@@ -121,14 +123,14 @@ where
   where
     C: CommandMetadata<Info> + Sized + 'static,
   {
-    self.commands.add_command(command);
+    self.root_scripts = self.root_scripts.add_command(command);
     self
   }
 
   pub fn add_subcommand<SubcommandInfo>(
     mut self,
     namespace: &str,
-    commands: SubcommandList<SubcommandInfo>,
+    commands: Scripts<SubcommandInfo>,
   ) -> Self
   where
     SubcommandInfo: Clone + 'static,
@@ -141,8 +143,7 @@ where
 
   pub async fn run(self) {
     crate::run_loop::run(
-      self.info,
-      self.commands,
+      self.root_scripts,
       self.subcommands,
       &mut (*self
         .linereader
