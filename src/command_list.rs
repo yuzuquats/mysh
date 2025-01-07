@@ -19,7 +19,7 @@ where
   }
 
   fn print_indent(&self, level: usize) {
-    print!("{}", " ".repeat(4 + (level) * 13));
+    print!("{}", " ".repeat(4 + (level) * 5));
   }
 
   pub fn print_help(&self, level: usize) {
@@ -29,11 +29,11 @@ where
     for key in keys {
       let command = self.commands.get(key).expect("");
       self.print_indent(level);
-      println!("{:12} {}", command.name().bold(), command.description());
+      println!("{:6} {}", command.name().bold(), command.description());
       for help in command.help() {
         if help.len() > 0 {
           self.print_indent(level);
-          println!("{:12} {}", "", help);
+          println!("{:6} {}", "", help);
         }
       }
     }
