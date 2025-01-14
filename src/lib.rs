@@ -21,3 +21,14 @@ pub mod json {
   pub use serde_json::to_value;
   pub use serde_json::Value;
 }
+
+#[macro_export]
+macro_rules! shell {
+  ($cmd:expr, [$($arg:expr),* $(,)?]) => {{
+    use anyhow::Context;
+    std::process::Command::new($cmd)
+      .args(&[$($arg),*])
+      .status()
+      .context("cmd failed")?
+  }};
+}
