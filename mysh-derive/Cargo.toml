@@ -12,7 +12,7 @@ license = "MIT"
 repository = "https://github.com/yuzuquats/mysh"
 
 [dependencies]
-anyhow = { workspace = true }
+anyhow.workspace = true
 serde = "1.0.195"
 serde-reflection = "0.3.6"
 serde_json = "1.0.111"
@@ -22,3 +22,6 @@ proc-macro2 = "1.0.78"
 
 [lib]
 proc-macro = true
+
+[profile.dev]
+incremental = true

@@ -9,6 +9,9 @@ env_logger = "0.11.0"
 log = "0.4.20"
 tokio = { version = "1.35.1", features = ["full"] }
 mysh = { path = "../.." }
-anyhow = { workspace = true }
+anyhow.workspace = true
 serde = "1.0.195"
 futures = "0.3"
+
+[profile.dev]
+incremental = true

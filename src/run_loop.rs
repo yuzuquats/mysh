@@ -41,7 +41,7 @@ where
     return Ok(());
   }
 
-  println!("argv: {:?}", argv);
+  // println!("argv: {:?}", argv);
 
   loop {
     let sig = line_reader.read_line();
