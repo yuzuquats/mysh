@@ -1,14 +1,16 @@
-use crate::command_list::CommandList;
-use crate::error::Error;
-use crate::shell::Callable;
-use crate::tokenizer::IntoArgs;
-use crate::Scripts;
 use anyhow::anyhow;
 use colored::Colorize;
 use reedline::Signal;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
+use tracing::{error, info};
+
+use crate::command_list::CommandList;
+use crate::error::Error;
+use crate::shell::Callable;
+use crate::tokenizer::IntoArgs;
+use crate::Scripts;
 
 pub trait LineReader {
   fn read_line(&mut self) -> anyhow::Result<Signal>;
@@ -22,7 +24,7 @@ pub async fn run<Info>(
   Info: Clone,
 {
   if let Err(e) = run_once_or_loop(&scripts, subcommands, line_reader).await {
-    println!("{} {:#?}", "[Error]".red(), e);
+    error!("{}", e);
   }
 }
 
@@ -59,15 +61,15 @@ where
 
         match exec(&scripts, &subcommands, argv).await {
           Ok(_) => {}
-          Err(e) => println!("{} {:#?}", "[Error]".red(), e),
+          Err(e) => error!("{}", e),
         }
       }
       Ok(Signal::CtrlD) | Ok(Signal::CtrlC) => {
-        println!("\nAborted!");
+        info!("Exiting");
         break;
       }
       x => {
-        println!("Event: {:?}", x);
+        error!("Event: {:?}", x);
       }
     }
   }

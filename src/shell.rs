@@ -189,7 +189,7 @@ impl Prompt for PromptText {
     &self,
     _prompt_mode: reedline::PromptEditMode,
   ) -> std::borrow::Cow<str> {
-    Cow::Borrowed(" || ")
+    Cow::Borrowed(" → ")
   }
 
   fn render_prompt_multiline_indicator(&self) -> std::borrow::Cow<str> {
