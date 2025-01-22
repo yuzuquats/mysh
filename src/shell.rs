@@ -42,6 +42,10 @@ where
     }
   }
 
+  pub fn to_shell(self) -> Shell<Info> {
+    Shell::new_with_root_scripts(self)
+  }
+
   pub async fn run(self) {
     crate::run_loop::run(self, HashMap::new(), &mut DefaultLineReader::new()).await;
   }
@@ -106,6 +110,14 @@ where
   pub fn new(info: Info) -> Self {
     Shell {
       root_scripts: Scripts::new(info),
+      linereader: None,
+      subcommands: HashMap::new(),
+    }
+  }
+
+  pub fn new_with_root_scripts(root_scripts: Scripts<Info>) -> Self {
+    Shell {
+      root_scripts,
       linereader: None,
       subcommands: HashMap::new(),
     }
