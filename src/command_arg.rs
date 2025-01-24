@@ -1,4 +1,4 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use serde::de;
 use uuid::Uuid;
 
@@ -64,7 +64,7 @@ where
   // println!("--argv {:#?}", argv);
 
   if argv.len() == 1 {
-    return Ok(serde_json::from_str("null")?);
+    return Ok(serde_json::from_str("null").context("Missing arguments")?);
   }
 
   if argv.len() == 2 {
