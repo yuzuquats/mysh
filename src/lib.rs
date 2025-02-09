@@ -14,6 +14,7 @@ pub use command_arg::{parse_arguments, CommandArg};
 pub use command_metadata::CommandMetadata;
 pub use error::{Error, Result};
 pub use futures;
+pub use reedline::ExternalPrinter;
 pub use shell::{DefaultLineReader, PromptText};
 pub use shell::{Scripts, Shell};
 

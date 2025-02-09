@@ -7,8 +7,8 @@ use std::{
 use anyhow::{anyhow, Context};
 use futures::Future;
 use reedline::{
-  DefaultPrompt, DefaultPromptSegment, FileBackedHistory, Prompt, PromptHistorySearchStatus,
-  Reedline,
+  DefaultPrompt, DefaultPromptSegment, ExternalPrinter, FileBackedHistory, Prompt,
+  PromptHistorySearchStatus, Reedline,
 };
 use serde_json::Value;
 
@@ -47,6 +47,10 @@ where
   }
 
   pub async fn run(self) {
+    crate::run_loop::run(self, HashMap::new(), &mut DefaultLineReader::new()).await;
+  }
+
+  pub async fn run_with(self) {
     crate::run_loop::run(self, HashMap::new(), &mut DefaultLineReader::new()).await;
   }
 
@@ -163,6 +167,17 @@ where
     )
     .await;
   }
+
+  pub async fn run_with(self, external_printer: ExternalPrinter<String>) {
+    crate::run_loop::run(
+      self.root_scripts,
+      self.subcommands,
+      &mut (*self
+        .linereader
+        .unwrap_or_else(|| Box::new(DefaultLineReader::new_with(Some(external_printer))))),
+    )
+    .await;
+  }
 }
 
 #[derive(Clone)]
@@ -231,15 +246,21 @@ pub struct DefaultLineReader {
 }
 
 impl DefaultLineReader {
-  pub fn new() -> DefaultLineReader {
+  pub fn new() -> Self {
+    Self::new_with(None)
+  }
+
+  pub fn new_with(external_printer: Option<ExternalPrinter<String>>) -> Self {
     let history = Box::new(
       FileBackedHistory::with_file(100, "history.txt".into())
         .expect("Error configuring history with file"),
     );
-    let reedline = Reedline::create()
-      // .with_completer(completer)
-      // .with_partial_completions(partial_completions)
-      .with_history(history);
+    let mut reedline = Reedline::create().with_history(history);
+    reedline = if let Some(external_printer) = external_printer {
+      reedline.with_external_printer(external_printer)
+    } else {
+      reedline
+    };
 
     DefaultLineReader {
       reedline,

@@ -27,7 +27,7 @@ futures.workspace = true
 indoc = "2.0.4"
 
 mysh_derive = { version = "0.1.7", path = "./mysh-derive" }
-reedline = "0.36.0"
+reedline = { version = "0.38.0", features = ["external_printer"] }
 serde = "1.0.214"
 serde-reflection = "0.4.0"
 serde_derive = "1.0.214"
