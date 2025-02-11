@@ -257,6 +257,7 @@ impl DefaultLineReader {
     );
     let mut reedline = Reedline::create().with_history(history);
     reedline = if let Some(external_printer) = external_printer {
+      println!("using external printer");
       reedline.with_external_printer(external_printer)
     } else {
       reedline
