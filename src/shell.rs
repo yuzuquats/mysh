@@ -241,7 +241,8 @@ impl Prompt for PromptText {
 }
 
 pub struct DefaultLineReader {
-  reedline: Reedline,
+  pub(crate) reedline: Reedline,
+  pub(crate) printer: Option<ExternalPrinter<String>>,
   pub prompt: PromptText,
 }
 
@@ -256,15 +257,14 @@ impl DefaultLineReader {
         .expect("Error configuring history with file"),
     );
     let mut reedline = Reedline::create().with_history(history);
-    reedline = if let Some(external_printer) = external_printer {
-      println!("using external printer");
+    reedline = if let Some(external_printer) = external_printer.clone() {
       reedline.with_external_printer(external_printer)
     } else {
       reedline
     };
-
     DefaultLineReader {
       reedline,
+      printer: external_printer,
       prompt: PromptText::new(),
     }
   }
@@ -273,5 +273,9 @@ impl DefaultLineReader {
 impl LineReader for DefaultLineReader {
   fn read_line(&mut self) -> anyhow::Result<reedline::Signal> {
     self.reedline.read_line(&self.prompt).context("")
+  }
+
+  fn external_printer(&self) -> Option<ExternalPrinter<String>> {
+    self.printer.clone()
   }
 }

@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use colored::Colorize;
-use reedline::Signal;
+use reedline::{ExternalPrinter, Signal};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
@@ -14,6 +14,7 @@ use crate::Scripts;
 
 pub trait LineReader {
   fn read_line(&mut self) -> anyhow::Result<Signal>;
+  fn external_printer(&self) -> Option<ExternalPrinter<String>>;
 }
 
 pub async fn run<Info>(
@@ -38,6 +39,16 @@ where
 {
   let mut argv: Vec<String> = env::args().collect();
   if argv.len() > 1 {
+    // manually set up the printer because we're not using reedline
+    if let Some(external_printer) = line_reader.external_printer() {
+      let rx = external_printer.receiver().clone();
+      tokio::spawn(async move {
+        while let Ok(s) = rx.recv() {
+          print!("{}", s);
+        }
+      });
+    }
+
     argv.remove(0);
     exec(&scripts, &subcommands, argv).await?;
     return Ok(());
