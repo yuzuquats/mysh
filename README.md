@@ -1,6 +1,7 @@
 # mysh-rs
 
-mysh, short for "My Shell", is a rust library for quickly building small interactive shells.
+mysh, short for "My Shell", is a rust library for quickly building small
+interactive shells.
 
 ## Usage
 
