@@ -3,36 +3,36 @@ use serde::de;
 use uuid::Uuid;
 
 pub trait CommandArg {
-  fn display_help() -> Vec<&'static str>;
+  fn display_help() -> Vec<String>;
 }
 
 impl CommandArg for String {
-  fn display_help() -> Vec<&'static str> {
-    vec!["[string]"]
+  fn display_help() -> Vec<String> {
+    vec!["[string]".to_string()]
   }
 }
 
 impl CommandArg for i64 {
-  fn display_help() -> Vec<&'static str> {
-    vec!["[i64]"]
+  fn display_help() -> Vec<String> {
+    vec!["[i64]".to_string()]
   }
 }
 
 impl CommandArg for i32 {
-  fn display_help() -> Vec<&'static str> {
-    vec!["[i32]"]
+  fn display_help() -> Vec<String> {
+    vec!["[i32]".to_string()]
   }
 }
 
 impl CommandArg for f32 {
-  fn display_help() -> Vec<&'static str> {
-    vec!["[f32]"]
+  fn display_help() -> Vec<String> {
+    vec!["[f32]".to_string()]
   }
 }
 
 impl CommandArg for Uuid {
-  fn display_help() -> Vec<&'static str> {
-    vec!["[uuid]"]
+  fn display_help() -> Vec<String> {
+    vec!["[uuid]".to_string()]
   }
 }
 
@@ -40,7 +40,7 @@ impl<T> CommandArg for Option<T>
 where
   T: CommandArg,
 {
-  fn display_help() -> Vec<&'static str> {
+  fn display_help() -> Vec<String> {
     // @todo: properly format
     // let inner = T::display_help();
     // if inner.len() == 1 && let Some(first) = inner.get(0) && !first.starts_with("--") {
@@ -50,8 +50,12 @@ where
     if help.len() == 0 {
       return vec![];
     }
+    if help.len() == 1 {
+      let opt = help.get(0).unwrap();
+      return vec![format!("Option<{opt}>")];
+    }
 
-    let mut opt = vec!["<Optional>"];
+    let mut opt = vec!["<Optional>".to_string()];
     opt.append(help);
     opt
   }

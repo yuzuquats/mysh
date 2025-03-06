@@ -22,18 +22,26 @@ where
     print!("{}", " ".repeat(4 + (level) * 5));
   }
 
-  pub fn print_help(&self, level: usize) {
+  pub fn print_help(&self, level: usize, include_args: bool) {
     let mut keys: Vec<_> = self.commands.keys().collect();
     keys.sort();
 
     for key in keys {
       let command = self.commands.get(key).expect("");
       self.print_indent(level);
-      println!("{:6} {}", command.name().bold(), command.description());
-      for help in command.help() {
-        if help.len() > 0 {
-          self.print_indent(level);
-          println!("{:6} {}", "", help);
+      let indent = (24 - (level as i32 * 5 - 4)).max(0) as usize;
+      println!(
+        "{:width$} {}",
+        command.name().bold(),
+        command.description(),
+        width = indent
+      );
+      if include_args {
+        for help in command.help() {
+          if help.len() > 0 {
+            self.print_indent(level);
+            println!("{:6} {}", "", help);
+          }
         }
       }
     }

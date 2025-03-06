@@ -151,7 +151,7 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
           Ok(mysh::json::to_value(r).context("Return value not json-able")?)
         }))
       }
-      fn help(&self) -> Vec<&'static str> {
+      fn help(&self) -> Vec<String> {
         use mysh::CommandArg;
         #args_ty_turbo::display_help()
       }

@@ -7,13 +7,13 @@ use serde_json::Value;
 pub struct DefaultArg;
 
 impl CommandArg for DefaultArg {
-  fn display_help() -> Vec<&'static str> {
+  fn display_help() -> Vec<String> {
     vec![]
   }
 }
 
 impl CommandArg for () {
-  fn display_help() -> Vec<&'static str> {
+  fn display_help() -> Vec<String> {
     vec![]
   }
 }
@@ -27,7 +27,7 @@ pub trait CommandMetadata<Info> {
     info: Info,
     argv: Vec<String>,
   ) -> Result<std::pin::Pin<Box<dyn Future<Output = Result<Value, Error>>>>, Error>;
-  fn help(&self) -> Vec<&'static str>;
+  fn help(&self) -> Vec<String>;
 
   fn print_help(&self) {
     let options = self.help();

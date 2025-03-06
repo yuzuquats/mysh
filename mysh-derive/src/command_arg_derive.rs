@@ -18,9 +18,15 @@ pub fn derive(input: TokenStream) -> TokenStream {
     let Some(ident) = &field.ident else {
       continue;
     };
-    let arg = format!("--{ident}: {}", field.ty.to_token_stream());
+    let normalized_ty = field
+      .ty
+      .to_token_stream()
+      .to_string()
+      .replace(" >", ">")
+      .replace(" < ", "<");
+    let arg = format!("--{ident}: {normalized_ty}");
     fields_as_shell_args.push(quote! {
-      #arg
+      #arg.to_string()
     });
   }
   // let args = fields_as_shell_args.join("");
@@ -28,7 +34,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
   let name = input.ident;
   let expanded = quote! {
     impl mysh::CommandArg for #name {
-      fn display_help() -> Vec<&'static str> {
+      fn display_help() -> Vec<String> {
         vec![#(#fields_as_shell_args),*]
       }
     }

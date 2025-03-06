@@ -20,7 +20,7 @@ pub trait Callable {
     argv: Vec<String>,
   ) -> crate::Result<std::pin::Pin<Box<dyn Future<Output = crate::Result<Value>>>>>;
 
-  fn print_help(&self);
+  fn print_help(&self, include_args: bool);
 }
 
 pub struct Scripts<Info>
@@ -93,8 +93,8 @@ impl<T: Clone> Callable for Scripts<T> {
     subcommand.call_with_argv(self.info.clone(), argv)
   }
 
-  fn print_help(&self) {
-    self.commands.print_help(1);
+  fn print_help(&self, include_args: bool) {
+    self.commands.print_help(1, include_args);
   }
 }
 
