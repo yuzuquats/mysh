@@ -7,7 +7,7 @@ use std::env;
 use tracing::{error, info};
 
 use crate::command_list::CommandList;
-use crate::error::Error;
+use crate::error::{Error, ToTrace};
 use crate::shell::Callable;
 use crate::tokenizer::IntoArgs;
 use crate::Scripts;

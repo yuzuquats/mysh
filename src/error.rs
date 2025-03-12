@@ -9,12 +9,15 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-impl Error {
-  pub fn to_trace(self) -> ExceptionWithTrace {
+pub trait ToTrace {
+  fn to_trace(&self) -> ExceptionWithTrace;
+}
+
+impl ToTrace for Error {
+  fn to_trace(&self) -> ExceptionWithTrace {
     match self {
       Error::Other(error) => {
         let trace = error.backtrace();
-
         let message = Some(format!("{}", error));
 
         let mut sources = Vec::new();
@@ -24,12 +27,11 @@ impl Error {
           current_source = source.source();
         }
 
-        let mut exception = ExceptionWithTrace::with_sources(message, sources, trace);
-        
-        // Set the filter ranges as per the comments
+        let mut exception = ExceptionWithTrace::with_sources(message, sources, Some(trace));
+
         exception.filtered_range.0 = Some("anyhow::__private::format_err".to_string());
         exception.filtered_range.1 = Some("mysh::run_loop::run_once_or_loop".to_string());
-        
+
         exception
       }
     }
@@ -38,7 +40,7 @@ impl Error {
 
 #[cfg(test)]
 mod test {
-  use super::Error;
+  use super::{Error, ToTrace};
   use anyhow::{anyhow, Context};
   use std::io;
 
@@ -54,7 +56,7 @@ mod test {
 
     // Verify the primary message
     assert!(exception.message.is_some(), "Should have a message");
-    
+
     // For anyhow errors, we expect source chain to be populated
     assert!(!exception.sources.is_empty(), "Should have sources");
 
@@ -73,10 +75,16 @@ mod test {
 
     // Verify that frames are not empty
     assert!(!exception.frames.is_empty(), "Should have stack frames");
-    
+
     // Verify filtered_range is set to the custom values
-    assert_eq!(exception.filtered_range.0, Some("anyhow::__private::format_err".to_string()));
-    assert_eq!(exception.filtered_range.1, Some("mysh::run_loop::run_once_or_loop".to_string()));
+    assert_eq!(
+      exception.filtered_range.0,
+      Some("anyhow::__private::format_err".to_string())
+    );
+    assert_eq!(
+      exception.filtered_range.1,
+      Some("mysh::run_loop::run_once_or_loop".to_string())
+    );
   }
 
   #[test]
@@ -84,7 +92,7 @@ mod test {
     // Create an IO error and wrap it
     let io_error = io::Error::new(io::ErrorKind::NotFound, "file not found");
     let err = Error::Other(anyhow::Error::new(io_error));
-    
+
     let exception = err.to_trace();
 
     // Verify the primary message
@@ -100,10 +108,16 @@ mod test {
 
     // Verify that frames are not empty
     assert!(!exception.frames.is_empty(), "Should have stack frames");
-    
+
     // Verify filtered_range is set to the custom values
-    assert_eq!(exception.filtered_range.0, Some("anyhow::__private::format_err".to_string()));
-    assert_eq!(exception.filtered_range.1, Some("mysh::run_loop::run_once_or_loop".to_string()));
+    assert_eq!(
+      exception.filtered_range.0,
+      Some("anyhow::__private::format_err".to_string())
+    );
+    assert_eq!(
+      exception.filtered_range.1,
+      Some("mysh::run_loop::run_once_or_loop".to_string())
+    );
   }
 
   // Helper functions to create nested errors

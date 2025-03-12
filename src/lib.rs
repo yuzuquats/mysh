@@ -40,5 +40,6 @@ macro_rules! shell {
 }
 
 pub mod __dev {
+  pub use crate::error::ToTrace;
   pub use crate::exception::{ExceptionWithTrace, FrameSymbol};
 }

@@ -17,11 +17,11 @@ pub struct ExceptionWithTrace {
 }
 
 impl ExceptionWithTrace {
-  pub fn new<'a>(message: Option<String>, trace: &Backtrace) -> Self {
+  pub fn new<'a>(message: Option<String>, trace: Option<&Backtrace>) -> Self {
     ExceptionWithTrace {
       message,
       sources: Vec::new(),
-      frames: ExceptionWithTrace::parse_frames(&trace),
+      frames: trace.map_or_else(Vec::new, |t| ExceptionWithTrace::parse_frames(t)),
       filtered_range: (None, None),
     }
   }
@@ -29,12 +29,12 @@ impl ExceptionWithTrace {
   pub fn with_sources<'a>(
     message: Option<String>,
     sources: Vec<String>,
-    trace: &Backtrace,
+    trace: Option<&Backtrace>,
   ) -> Self {
     ExceptionWithTrace {
       message,
       sources,
-      frames: ExceptionWithTrace::parse_frames(&trace),
+      frames: trace.map_or_else(Vec::new, |t| ExceptionWithTrace::parse_frames(t)),
       filtered_range: (None, None),
     }
   }
@@ -198,17 +198,27 @@ mod tests {
   fn test_filtered_range_defaults() {
     // Test that the default range values are None
     let backtrace = Backtrace::capture();
-    let exception = ExceptionWithTrace::new(Some("test error".to_string()), &backtrace);
+    let exception = ExceptionWithTrace::new(Some("test error".to_string()), Some(&backtrace));
 
     assert_eq!(exception.filtered_range.0, None);
     assert_eq!(exception.filtered_range.1, None);
   }
 
   #[test]
+  fn test_filtered_range_defaults_no_backtrace() {
+    // Test with no backtrace
+    let exception = ExceptionWithTrace::new(Some("test error".to_string()), None);
+
+    assert_eq!(exception.filtered_range.0, None);
+    assert_eq!(exception.filtered_range.1, None);
+    assert!(exception.frames.is_empty(), "Frames should be empty with no backtrace");
+  }
+
+  #[test]
   fn test_filtered_range_custom() {
     // Test setting custom range values
     let backtrace = Backtrace::capture();
-    let mut exception = ExceptionWithTrace::new(Some("test error".to_string()), &backtrace);
+    let mut exception = ExceptionWithTrace::new(Some("test error".to_string()), Some(&backtrace));
 
     // Set custom range values
     exception.filtered_range.0 = Some("start_function".to_string());
