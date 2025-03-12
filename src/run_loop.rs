@@ -25,7 +25,12 @@ pub async fn run<Info>(
   Info: Clone,
 {
   if let Err(e) = run_once_or_loop(&scripts, subcommands, line_reader).await {
-    error!("{}", e);
+    let panic_with_trace_ser =
+      serde_json::to_string(&e.to_trace()).expect("trace couldn't serialize");
+    error!(
+      exception.trace_json = panic_with_trace_ser,
+      "Command Failed"
+    );
   }
 }
 
@@ -72,7 +77,14 @@ where
 
         match exec(&scripts, &subcommands, argv).await {
           Ok(_) => {}
-          Err(e) => error!("{}", e),
+          Err(e) => {
+            let panic_with_trace_ser =
+              serde_json::to_string(&e.to_trace()).expect("trace couldn't serialize");
+            error!(
+              exception.trace_json = panic_with_trace_ser,
+              "Command Failed"
+            );
+          }
         }
       }
       Ok(Signal::CtrlD) | Ok(Signal::CtrlC) => {

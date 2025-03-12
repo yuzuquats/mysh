@@ -1,9 +1,14 @@
 #![feature(associated_type_defaults)]
+#![feature(coroutines)]
+#![feature(coroutine_trait)]
+#![feature(iter_from_coroutine)]
+#![feature(backtrace_frames)]
 
 mod command_arg;
 mod command_list;
 mod command_metadata;
 mod error;
+mod exception;
 mod run_loop;
 mod shell;
 mod tokenizer;
@@ -32,4 +37,8 @@ macro_rules! shell {
       .status()
       .context("cmd failed")?
   }};
+}
+
+pub mod __dev {
+  pub use crate::exception::{ExceptionWithTrace, FrameSymbol};
 }
