@@ -106,7 +106,10 @@ impl ExceptionWithTrace {
         }
 
         match line.func.as_ref() {
-          "core::panicking::panic_fmt"
+          "<start_thread>"
+          | "clone3"
+          | "<unknown>"
+          | "core::panicking::panic_fmt"
           | "core::result::unwrap_failed"
           | "core::result::Result<T,E>::expect" => continue,
           _ => {
@@ -211,7 +214,10 @@ mod tests {
 
     assert_eq!(exception.filtered_range.0, None);
     assert_eq!(exception.filtered_range.1, None);
-    assert!(exception.frames.is_empty(), "Frames should be empty with no backtrace");
+    assert!(
+      exception.frames.is_empty(),
+      "Frames should be empty with no backtrace"
+    );
   }
 
   #[test]
