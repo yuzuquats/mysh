@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context};
+use crate::error::Error;
 use serde::de;
 use uuid::Uuid;
 
@@ -61,14 +61,17 @@ where
   }
 }
 
-pub fn parse_arguments<T>(argv: Vec<String>) -> Result<T, anyhow::Error>
+pub fn parse_arguments<T>(argv: Vec<String>) -> crate::Result<T>
 where
   T: de::DeserializeOwned + CommandArg,
 {
   // println!("--argv {:#?}", argv);
 
   if argv.len() == 1 {
-    return Ok(serde_json::from_str("null").context("Missing arguments")?);
+    return Ok(
+      serde_json::from_str("null")
+        .map_err(|_| Error::ArgParseError("Missing arguments".to_string()))?,
+    );
   }
 
   if argv.len() == 2 {
@@ -80,8 +83,8 @@ where
       return Ok(only);
     };
 
-    let ser = serde_json::to_string(&only)?;
-    return Ok(serde_json::from_str(&ser)?);
+    let ser = serde_json::to_string(&only).map_err(|e| Error::Other(e.into()))?;
+    return Ok(serde_json::from_str(&ser).map_err(|e| Error::Other(e.into()))?);
   }
 
   use serde_json::Map;
@@ -96,12 +99,12 @@ where
     if arg.starts_with("--") {
       let arg = arg.trim_start_matches("--");
       if key.is_some() {
-        return Err(anyhow!("option without param"));
+        return Err(Error::ArgParseError("option without param".to_string()));
       }
       key = Some(arg.to_owned());
     } else {
       let Some(unwrapped_key) = key else {
-        return Err(anyhow!("param without option"));
+        return Err(Error::ArgParseError("param without option".to_string()));
       };
       match arg.parse::<i64>() {
         Ok(n) => {
@@ -117,6 +120,6 @@ where
       key = None;
     }
   }
-  let ser = serde_json::to_string(&map)?;
-  Ok(serde_json::from_str(&ser)?)
+  let ser = serde_json::to_string(&map).map_err(|e| Error::Other(e.into()))?;
+  Ok(serde_json::from_str(&ser).map_err(|e| Error::Other(e.into()))?)
 }

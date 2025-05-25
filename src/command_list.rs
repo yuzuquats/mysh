@@ -59,4 +59,10 @@ where
   pub fn find_command(&self, name: &str) -> Option<&Box<dyn CommandMetadata<Info>>> {
     self.commands.get(name)
   }
+  /// Returns the sorted list of command names in this command group.
+  pub fn names(&self) -> Vec<String> {
+    let mut keys: Vec<String> = self.commands.keys().cloned().collect();
+    keys.sort();
+    keys
+  }
 }

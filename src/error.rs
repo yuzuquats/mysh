@@ -3,7 +3,15 @@ use crate::__dev::ExceptionWithTrace;
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 pub enum Error {
-  #[error("{}", .0)]
+  #[error("arg parse error: {0}")]
+  ArgParseError(String),
+  #[error("Please provide a subcommand. Available subcommands: {0}")]
+  MissingSubcommand(String),
+  #[error("No such subcommand. ie. ./[bin] [command] [subcommand]")]
+  NoSuchSubcommand,
+  #[error("Command not found: {0}")]
+  CommandNotFound(String),
+  #[error(transparent)]
   Other(#[from] anyhow::Error),
 }
 
@@ -15,10 +23,12 @@ pub trait ToTrace {
 
 impl ToTrace for Error {
   fn to_trace(&self) -> ExceptionWithTrace {
-    match self {
+    let message = Some(format!("{}", self));
+    let mut backtrace = None;
+
+    let sources = match self {
       Error::Other(error) => {
-        let trace = error.backtrace();
-        let message = Some(format!("{}", error));
+        backtrace = Some(error.backtrace());
 
         let mut sources = Vec::new();
         let mut current_source = error.source();
@@ -27,14 +37,20 @@ impl ToTrace for Error {
           current_source = source.source();
         }
 
-        let mut exception = ExceptionWithTrace::with_sources(message, sources, Some(trace));
-
-        exception.filtered_range.0 = Some("anyhow::__private::format_err".to_string());
-        exception.filtered_range.1 = Some("mysh::run_loop::run_once_or_loop".to_string());
-
-        exception
+        sources
       }
-    }
+      Error::ArgParseError(_) => vec![],
+      Error::MissingSubcommand(_) => vec![],
+      Error::NoSuchSubcommand => vec![],
+      Error::CommandNotFound(_) => vec![],
+    };
+
+    let mut exception = ExceptionWithTrace::with_sources(message, sources, backtrace);
+
+    exception.filtered_range.0 = Some("anyhow::__private::format_err".to_string());
+    exception.filtered_range.1 = Some("mysh::run_loop::run_once_or_loop".to_string());
+
+    exception
   }
 }
 

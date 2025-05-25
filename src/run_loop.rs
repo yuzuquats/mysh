@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use colored::Colorize;
 use reedline::{ExternalPrinter, Signal};
 use serde_json::Value;
@@ -73,7 +72,7 @@ where
 
         let argv = line
           .try_into_args()
-          .map_err(|e| anyhow!("arg parse error >> {e}"))?;
+        .map_err(|e| Error::ArgParseError(e.to_string()))?;
 
         match exec(&scripts, &subcommands, argv).await {
           Ok(_) => {}
@@ -117,7 +116,7 @@ async fn exec<Info: Clone>(
     let command = scripts
       .commands
       .find_command(help_arg)
-      .ok_or(anyhow!("Command not found: {help_arg}"))?;
+      .ok_or(Error::CommandNotFound(help_arg.clone()))?;
 
     command.print_help();
     return Ok(().into());

@@ -4,7 +4,8 @@ use std::{
   sync::{Arc, RwLock},
 };
 
-use anyhow::{anyhow, Context};
+use anyhow::Context;
+use crate::error::Error;
 use futures::Future;
 use reedline::{
   DefaultPrompt, DefaultPromptSegment, ExternalPrinter, FileBackedHistory, Prompt,
@@ -68,10 +69,13 @@ where
       .map(|s| s.to_string())
       .collect::<Vec<String>>();
 
-    let subcommand_name = argv.get(0).ok_or(anyhow!("Command name not found"))?;
-    let subcommand = self.commands.find_command(&subcommand_name).ok_or(anyhow!(
-      "No such subcommand. ie. ./[bin] [command] [subcommand]"
-    ))?;
+    let subcommand_name = argv
+      .get(0)
+      .ok_or_else(|| Error::MissingSubcommand(self.commands.names().join(", ")))?;
+    let subcommand = self
+      .commands
+      .find_command(&subcommand_name)
+      .ok_or(Error::NoSuchSubcommand)?;
 
     Ok(subcommand.call_with_argv(self.info.clone(), argv)?.await?)
   }
@@ -82,12 +86,10 @@ impl<T: Clone> Callable for Scripts<T> {
     &self,
     argv: Vec<String>,
   ) -> crate::Result<std::pin::Pin<Box<dyn Future<Output = crate::Result<Value>>>>> {
-    let subcommand_name = argv.get(1).ok_or(anyhow!(
-      "Please provide a subcommand. ie. ./[bin] [command] [subcommand]"
-    ))?;
-    let subcommand = self.commands.find_command(&subcommand_name).ok_or(anyhow!(
-      "No such subcommand. ie. ./[bin] [command] [subcommand]"
-    ))?;
+    let subcommand_name = argv
+      .get(1)
+      .ok_or_else(|| Error::MissingSubcommand(self.commands.names().join(", ")))?;
+    let subcommand = self.commands.find_command(&subcommand_name).ok_or(Error::NoSuchSubcommand)?;
     let mut argv = argv.clone();
     argv.remove(0);
     subcommand.call_with_argv(self.info.clone(), argv)
