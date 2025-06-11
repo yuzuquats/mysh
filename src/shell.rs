@@ -4,8 +4,8 @@ use std::{
   sync::{Arc, RwLock},
 };
 
-use anyhow::Context;
 use crate::error::Error;
+use anyhow::Context;
 use futures::Future;
 use reedline::{
   DefaultPrompt, DefaultPromptSegment, ExternalPrinter, FileBackedHistory, Prompt,
@@ -89,7 +89,10 @@ impl<T: Clone> Callable for Scripts<T> {
     let subcommand_name = argv
       .get(1)
       .ok_or_else(|| Error::MissingSubcommand(self.commands.names().join(", ")))?;
-    let subcommand = self.commands.find_command(&subcommand_name).ok_or(Error::NoSuchSubcommand)?;
+    let subcommand = self
+      .commands
+      .find_command(&subcommand_name)
+      .ok_or(Error::NoSuchSubcommand)?;
     let mut argv = argv.clone();
     argv.remove(0);
     subcommand.call_with_argv(self.info.clone(), argv)
@@ -206,29 +209,29 @@ impl PromptText {
 }
 
 impl Prompt for PromptText {
-  fn render_prompt_left(&self) -> std::borrow::Cow<str> {
+  fn render_prompt_left(&'_ self) -> std::borrow::Cow<'_, str> {
     Cow::Owned(self.0.read().expect("").clone().unwrap_or("".to_string()))
   }
 
-  fn render_prompt_right(&self) -> std::borrow::Cow<str> {
+  fn render_prompt_right(&'_ self) -> std::borrow::Cow<'_, str> {
     Cow::Borrowed("")
   }
 
   fn render_prompt_indicator(
-    &self,
+    &'_ self,
     _prompt_mode: reedline::PromptEditMode,
-  ) -> std::borrow::Cow<str> {
+  ) -> std::borrow::Cow<'_, str> {
     Cow::Borrowed(" → ")
   }
 
-  fn render_prompt_multiline_indicator(&self) -> std::borrow::Cow<str> {
+  fn render_prompt_multiline_indicator(&'_ self) -> std::borrow::Cow<'_, str> {
     Cow::Borrowed("::: ")
   }
 
   fn render_prompt_history_search_indicator(
-    &self,
+    &'_ self,
     history_search: reedline::PromptHistorySearch,
-  ) -> std::borrow::Cow<str> {
+  ) -> std::borrow::Cow<'_, str> {
     let prefix = match history_search.status {
       PromptHistorySearchStatus::Passing => "",
       PromptHistorySearchStatus::Failing => "failing ",

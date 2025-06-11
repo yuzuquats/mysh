@@ -3,15 +3,6 @@ use colored::Colorize;
 use futures::Future;
 use serde_json::Value;
 
-#[derive(Clone)]
-pub struct DefaultArg;
-
-impl CommandArg for DefaultArg {
-  fn display_help() -> Vec<String> {
-    vec![]
-  }
-}
-
 impl CommandArg for () {
   fn display_help() -> Vec<String> {
     vec![]

@@ -1,3 +1,4 @@
+use std::error::Error as StdError;
 use std::{backtrace::Backtrace, ops::Coroutine, panic::PanicHookInfo};
 
 use once_cell::sync::Lazy;
@@ -132,6 +133,32 @@ impl FrameSymbol {
   pub fn is_core_or_stdlib(&self) -> bool {
     self.func.starts_with("core::") || self.func.starts_with("std::")
   }
+}
+
+/// Extract source chain from an anyhow error
+pub fn extract_anyhow_sources(error: &anyhow::Error) -> Vec<String> {
+  let mut sources = Vec::new();
+  let mut current_source = error.source();
+
+  while let Some(source) = current_source {
+    sources.push(format!("{}", source));
+    current_source = source.source();
+  }
+
+  sources
+}
+
+/// Extract source chain from a standard error as a Vec of formatted strings
+pub fn extract_error_sources<E: StdError>(error: &E) -> Vec<String> {
+  let mut sources = Vec::new();
+  let mut current_source = error.source();
+
+  while let Some(source) = current_source {
+    sources.push(format!("{}", source));
+    current_source = source.source();
+  }
+
+  sources
 }
 
 #[cfg(test)]

@@ -41,5 +41,7 @@ macro_rules! shell {
 
 pub mod __dev {
   pub use crate::error::ToTrace;
-  pub use crate::exception::{ExceptionWithTrace, FrameSymbol};
+  pub use crate::exception::{
+    extract_anyhow_sources, extract_error_sources, ExceptionWithTrace, FrameSymbol,
+  };
 }
