@@ -10,14 +10,14 @@ futures = "0.3.30"
 authors = ["James Kao <james.l.kao@gmail.com>"]
 categories = ["command-line-interface"]
 description = "Scaffolding to build interactive shells"
-edition = "2021"
+edition = "2024"
 keywords = ["shell", "cli", "interactive", "terminal"]
 license = "MIT"
 name = "mysh"
 readme = "README.md"
 repository = "https://github.com/yuzuquats/mysh"
-rust-version = "1.68"
-version = "0.1.8"
+rust-version = "1.85"
+version = "0.1.9"
 
 [dependencies]
 mysh_derive = { version = "0.1.7", path = "./mysh-derive" }
