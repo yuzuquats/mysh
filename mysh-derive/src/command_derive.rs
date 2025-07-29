@@ -3,10 +3,10 @@ use std::str::FromStr;
 
 use proc_macro::TokenStream;
 use proc_macro2::{Delimiter, Group};
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use syn::FnArg::{self, Typed};
-use syn::{parse_macro_input, spanned::Spanned, Ident, LitStr};
 use syn::{AngleBracketedGenericArguments, GenericArgument, ItemFn, PathArguments, Type};
+use syn::{Ident, LitStr, parse_macro_input, spanned::Spanned};
 
 pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
   let (name, description, long_description) = {

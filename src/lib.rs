@@ -15,7 +15,7 @@ mod tokenizer;
 
 pub use mysh_derive::*;
 
-pub use command_arg::{parse_arguments, CommandArg};
+pub use command_arg::{CommandArg, parse_arguments};
 pub use command_metadata::CommandMetadata;
 pub use error::{Error, Result};
 pub use futures;
@@ -24,8 +24,8 @@ pub use shell::{DefaultLineReader, PromptText};
 pub use shell::{Scripts, Shell};
 
 pub mod json {
-  pub use serde_json::to_value;
   pub use serde_json::Value;
+  pub use serde_json::to_value;
 }
 
 #[macro_export]
@@ -42,6 +42,6 @@ macro_rules! shell {
 pub mod __dev {
   pub use crate::error::ToTrace;
   pub use crate::exception::{
-    extract_anyhow_sources, extract_error_sources, ExceptionWithTrace, FrameSymbol,
+    ExceptionWithTrace, FrameSymbol, extract_anyhow_sources, extract_error_sources,
   };
 }

@@ -1,4 +1,4 @@
-use mysh::{command, CommandArg};
+use mysh::{CommandArg, command};
 use serde::Deserialize;
 
 use crate::UserInfo;

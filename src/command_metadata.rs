@@ -1,4 +1,4 @@
-use crate::{error::Error, CommandArg};
+use crate::{CommandArg, error::Error};
 use colored::Colorize;
 use futures::Future;
 use serde_json::Value;

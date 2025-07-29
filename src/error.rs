@@ -57,7 +57,7 @@ impl ToTrace for Error {
 #[cfg(test)]
 mod test {
   use super::{Error, ToTrace};
-  use anyhow::{anyhow, Context};
+  use anyhow::{Context, anyhow};
   use std::io;
 
   #[test]

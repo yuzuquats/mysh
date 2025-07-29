@@ -1,4 +1,4 @@
-use mysh::{command, CommandArg, Shell, SubcommandList};
+use mysh::{CommandArg, Shell, SubcommandList, command};
 use serde::{Deserialize, Serialize};
 use tokio;
 

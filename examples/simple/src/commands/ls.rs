@@ -1,7 +1,7 @@
 use std::fs;
 
 use anyhow::anyhow;
-use mysh::{command, CommandArg};
+use mysh::{CommandArg, command};
 use serde::{Deserialize, Serialize};
 
 use crate::UserInfo;

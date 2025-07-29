@@ -316,12 +316,16 @@ mod tests {
     assert_eq!(filtered.len(), 3);
     assert_eq!(filtered[0].1.func, "middle_function");
     // The test includes post_end_function and end_function when there's no end filter
-    assert!(filtered
-      .iter()
-      .any(|(_, frame)| frame.func == "post_end_function"));
-    assert!(filtered
-      .iter()
-      .any(|(_, frame)| frame.func == "end_function"));
+    assert!(
+      filtered
+        .iter()
+        .any(|(_, frame)| frame.func == "post_end_function")
+    );
+    assert!(
+      filtered
+        .iter()
+        .any(|(_, frame)| frame.func == "end_function")
+    );
 
     // Test case 4: With no start and no end
     let exception = ExceptionWithTrace {
