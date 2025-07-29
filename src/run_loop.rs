@@ -1,15 +1,17 @@
 use colored::Colorize;
+use futures::FutureExt;
 use reedline::{ExternalPrinter, Signal};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
+use std::panic::AssertUnwindSafe;
 use tracing::{error, info};
 
+use crate::Scripts;
 use crate::command_list::CommandList;
 use crate::error::{Error, ToTrace};
 use crate::shell::Callable;
 use crate::tokenizer::IntoArgs;
-use crate::Scripts;
 
 pub trait LineReader {
   fn read_line(&mut self) -> anyhow::Result<Signal>;
@@ -54,8 +56,20 @@ where
     }
 
     argv.remove(0);
-    exec(&scripts, &subcommands, argv).await?;
-    return Ok(());
+
+    // In CLI mode, catch panics and exit with error code
+    let result = AssertUnwindSafe(exec(&scripts, &subcommands, argv))
+      .catch_unwind()
+      .await;
+
+    match result {
+      Ok(Ok(_)) => return Ok(()),
+      Ok(Err(e)) => return Err(e),
+      Err(_) => {
+        // A panic occurred - exit with error code
+        std::process::exit(1);
+      }
+    }
   }
 
   // println!("argv: {:?}", argv);
@@ -72,17 +86,25 @@ where
 
         let argv = line
           .try_into_args()
-        .map_err(|e| Error::ArgParseError(e.to_string()))?;
+          .map_err(|e| Error::ArgParseError(e.to_string()))?;
 
-        match exec(&scripts, &subcommands, argv).await {
-          Ok(_) => {}
-          Err(e) => {
+        // In interactive mode, catch panics and log them but continue
+        let result = AssertUnwindSafe(exec(&scripts, &subcommands, argv))
+          .catch_unwind()
+          .await;
+
+        match result {
+          Ok(Ok(_)) => {}
+          Ok(Err(e)) => {
             let panic_with_trace_ser =
               serde_json::to_string(&e.to_trace()).expect("trace couldn't serialize");
             error!(
               exception.trace_json = panic_with_trace_ser,
               "Command Failed"
             );
+          }
+          Err(_) => {
+            error!("Command panicked!");
           }
         }
       }
