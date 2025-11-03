@@ -86,6 +86,34 @@ impl<T: Clone> Callable for Scripts<T> {
     &self,
     argv: Vec<String>,
   ) -> crate::Result<std::pin::Pin<Box<dyn Future<Output = crate::Result<Value>>>>> {
+    // Check if --help flag is present
+    let has_help_flag = argv.iter().any(|arg| arg == "--help" || arg == "-h");
+
+    if has_help_flag {
+      let include_args = argv.iter().any(|s| s == "--args");
+
+      // If argv is ["status", "--help"], show help for all subcommands
+      let non_flag_args: Vec<&String> = argv.iter()
+        .filter(|arg| !arg.starts_with("--") && !arg.starts_with("-"))
+        .collect();
+
+      if non_flag_args.len() == 1 {
+        // Only the namespace, show help for all commands in this namespace
+        self.print_help(include_args);
+        return Ok(Box::pin(async { Ok(().into()) }));
+      }
+
+      // If argv is ["status", "print", "--help"], show help for the specific command
+      if let Some(subcommand_name) = non_flag_args.get(1) {
+        let subcommand = self
+          .commands
+          .find_command(subcommand_name)
+          .ok_or(Error::NoSuchSubcommand)?;
+        subcommand.print_help();
+        return Ok(Box::pin(async { Ok(().into()) }));
+      }
+    }
+
     let subcommand_name = argv
       .get(1)
       .ok_or_else(|| Error::MissingSubcommand(self.commands.names().join(", ")))?;

@@ -145,6 +145,13 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
           std::pin::Pin<Box<dyn mysh::futures::Future<Output = mysh::Result<mysh::json::Value>>>>
       > {
         use anyhow::Context;
+
+        // Check for --help flag
+        if argv.iter().any(|arg| arg == "--help" || arg == "-h") {
+          self.print_help();
+          return Ok(Box::pin(async { Ok(mysh::json::Value::Null) }));
+        }
+
         let args = mysh::parse_arguments(argv)?;
         Ok(Box::pin(async move {
           let r = #func_name::call(info, args).await?;

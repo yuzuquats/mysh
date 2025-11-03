@@ -1,4 +1,4 @@
-use mysh::{CommandArg, Shell, SubcommandList, command};
+use mysh::{CommandArg, Shell, Scripts, command};
 use serde::{Deserialize, Serialize};
 use tokio;
 
@@ -18,7 +18,7 @@ async fn main() {
     .add_command(commands::ls::ls)
     .add_subcommand(
       "status",
-      SubcommandList::new(StatusInfo {})
+      Scripts::new(StatusInfo {})
         .add_command(status_print)
         .add_command(status_log),
     )
