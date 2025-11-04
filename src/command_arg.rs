@@ -68,10 +68,15 @@ where
   // println!("--argv {:#?}", argv);
 
   if argv.len() == 1 {
-    return Ok(
-      serde_json::from_str("null")
-        .map_err(|_| Error::ArgParseError("Missing arguments".to_string()))?,
-    );
+    return Ok(serde_json::from_str("null").map_err(|_| {
+      let expected_fields = T::display_help();
+      if expected_fields.is_empty() {
+        Error::ArgParseError("No arguments expected, but command failed".to_string())
+      } else {
+        let fields_list = expected_fields.join(", ");
+        Error::ArgParseError(format!("Missing required arguments: {}", fields_list))
+      }
+    })?);
   }
 
   if argv.len() == 2 {
@@ -121,5 +126,19 @@ where
     }
   }
   let ser = serde_json::to_string(&map).map_err(|e| Error::Other(e.into()))?;
-  Ok(serde_json::from_str(&ser).map_err(|e| Error::Other(e.into()))?)
+  Ok(serde_json::from_str(&ser).map_err(|e| {
+    let expected_fields = T::display_help();
+    let provided_fields: Vec<String> = map.keys().map(|k| format!("--{}", k)).collect();
+
+    if expected_fields.is_empty() {
+      Error::Other(e.into())
+    } else {
+      let expected_list = expected_fields.join(", ");
+      let provided_list = provided_fields.join(", ");
+      Error::ArgParseError(format!(
+        "Failed to parse arguments.\nExpected: {}\nProvided: {}\nError: {}",
+        expected_list, provided_list, e
+      ))
+    }
+  })?)
 }
