@@ -111,16 +111,18 @@ where
       let Some(unwrapped_key) = key else {
         return Err(Error::ArgParseError("param without option".to_string()));
       };
-      match arg.parse::<i64>() {
-        Ok(n) => {
-          map.insert(
-            unwrapped_key,
-            serde_json::Value::Number(serde_json::Number::from(n as i64)),
-          );
-        }
-        Err(_) => {
-          map.insert(unwrapped_key, serde_json::Value::String(arg.to_string()));
-        }
+      // Try parsing as i64, then bool, then fall back to string
+      if let Ok(n) = arg.parse::<i64>() {
+        map.insert(
+          unwrapped_key,
+          serde_json::Value::Number(serde_json::Number::from(n as i64)),
+        );
+      } else if arg == "true" {
+        map.insert(unwrapped_key, serde_json::Value::Bool(true));
+      } else if arg == "false" {
+        map.insert(unwrapped_key, serde_json::Value::Bool(false));
+      } else {
+        map.insert(unwrapped_key, serde_json::Value::String(arg.to_string()));
       }
       key = None;
     }
