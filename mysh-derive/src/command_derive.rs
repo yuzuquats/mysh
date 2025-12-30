@@ -9,10 +9,11 @@ use syn::{AngleBracketedGenericArguments, GenericArgument, ItemFn, PathArguments
 use syn::{Ident, LitStr, parse_macro_input, spanned::Spanned};
 
 pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
-  let (name, description, long_description) = {
+  let (name, description, long_description, confirmation_message_tokens) = {
     let mut name: Option<LitStr> = None;
     let mut description: Option<LitStr> = None;
     let mut long_description: Option<LitStr> = None;
+    let mut confirmation_message: Option<LitStr> = None;
     let attr_parser = syn::meta::parser(|meta| {
       let Some(ident) = meta.path.get_ident() else {
         // should err? not recognized
@@ -30,13 +31,16 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
         long_description = Some(meta.value()?.parse()?);
         return Ok(());
       }
+      if ident == "confirmation_message" {
+        confirmation_message = Some(meta.value()?.parse()?);
+        return Ok(());
+      }
       Ok(())
     });
     parse_macro_input!(attr with attr_parser);
-    (
-      name.expect("name required"),
-      description.expect("description required"),
-      match long_description {
+
+    let to_option_tokens = |opt: Option<LitStr>| -> proc_macro2::TokenStream {
+      match opt {
         Some(s) => {
           let mut st = proc_macro2::TokenStream::from_str("Some").expect("");
           st.extend_one(
@@ -45,7 +49,14 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
           st
         }
         None => proc_macro2::TokenStream::from_str("None").expect(""),
-      },
+      }
+    };
+
+    (
+      name.expect("name required"),
+      description.expect("description required"),
+      to_option_tokens(long_description),
+      to_option_tokens(confirmation_message),
     )
   };
 
@@ -140,6 +151,9 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
       fn long_description(&self) -> Option<&'static str> {
         #long_description
       }
+      fn confirmation_message(&self) -> Option<&'static str> {
+        #confirmation_message_tokens
+      }
       fn call_with_argv(&self, info: #info_ty, argv: Vec<String>)
       -> mysh::Result<
           std::pin::Pin<Box<dyn mysh::futures::Future<Output = mysh::Result<mysh::json::Value>>>>
@@ -150,6 +164,13 @@ pub fn command(attr: TokenStream, func: TokenStream) -> TokenStream {
         if argv.iter().any(|arg| arg == "--help" || arg == "-h") {
           self.print_help();
           return Ok(Box::pin(async { Ok(mysh::json::Value::Null) }));
+        }
+
+        // Check for confirmation if required
+        if let Some(msg) = self.confirmation_message() {
+          if !mysh::confirm_action(msg)? {
+            return Ok(Box::pin(async { Ok(mysh::json::Value::Null) }));
+          }
         }
 
         let args = mysh::parse_arguments(argv)?;

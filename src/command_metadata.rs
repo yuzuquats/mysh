@@ -13,6 +13,9 @@ pub trait CommandMetadata<Info> {
   fn name(&self) -> &'static str;
   fn description(&self) -> &'static str;
   fn long_description(&self) -> Option<&'static str>;
+  fn confirmation_message(&self) -> Option<&'static str> {
+    None
+  }
   fn call_with_argv(
     &self,
     info: Info,
