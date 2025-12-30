@@ -45,3 +45,31 @@ pub mod __dev {
     ExceptionWithTrace, FrameSymbol, extract_anyhow_sources, extract_error_sources,
   };
 }
+
+/// Prompts the user with a confirmation message and returns true if they confirm.
+/// The message is displayed with colored formatting.
+pub fn confirm_action(message: &str) -> anyhow::Result<bool> {
+  use colored::Colorize;
+  use std::io::{BufRead, Write};
+
+  print!(
+    "{} {} {} ",
+    "⚠️ ".yellow().bold(),
+    message.red().bold(),
+    "Are you sure? [y/N]:".yellow()
+  );
+  std::io::stdout()
+    .flush()
+    .context("failed to flush stdout")?;
+
+  let mut input = String::new();
+  std::io::stdin()
+    .lock()
+    .read_line(&mut input)
+    .context("failed to read confirmation")?;
+
+  let input = input.trim().to_lowercase();
+  Ok(input == "y" || input == "yes")
+}
+
+use anyhow::Context;
