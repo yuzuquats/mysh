@@ -103,29 +103,34 @@ where
 
     if arg.starts_with("--") {
       let arg = arg.trim_start_matches("--");
-      if key.is_some() {
-        return Err(Error::ArgParseError("option without param".to_string()));
+      // If there's a pending key without a value, treat it as a boolean flag
+      if let Some(pending_key) = key.take() {
+        map.insert(pending_key, serde_json::Value::Bool(true));
       }
       key = Some(arg.to_owned());
     } else {
       let Some(unwrapped_key) = key else {
         return Err(Error::ArgParseError("param without option".to_string()));
       };
-      // Try parsing as i64, then bool, then fall back to string
-      if let Ok(n) = arg.parse::<i64>() {
+      // Try parsing as bool first (including 1/0), then i64, then fall back to string
+      if arg == "true" || arg == "1" {
+        map.insert(unwrapped_key, serde_json::Value::Bool(true));
+      } else if arg == "false" || arg == "0" {
+        map.insert(unwrapped_key, serde_json::Value::Bool(false));
+      } else if let Ok(n) = arg.parse::<i64>() {
         map.insert(
           unwrapped_key,
           serde_json::Value::Number(serde_json::Number::from(n as i64)),
         );
-      } else if arg == "true" {
-        map.insert(unwrapped_key, serde_json::Value::Bool(true));
-      } else if arg == "false" {
-        map.insert(unwrapped_key, serde_json::Value::Bool(false));
       } else {
         map.insert(unwrapped_key, serde_json::Value::String(arg.to_string()));
       }
       key = None;
     }
+  }
+  // If there's a trailing key without a value, treat it as a boolean flag
+  if let Some(pending_key) = key {
+    map.insert(pending_key, serde_json::Value::Bool(true));
   }
   let ser = serde_json::to_string(&map).map_err(|e| Error::Other(e.into()))?;
   Ok(serde_json::from_str(&ser).map_err(|e| {
