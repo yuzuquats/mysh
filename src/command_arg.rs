@@ -61,6 +61,19 @@ where
   }
 }
 
+/// Parse a string value into the appropriate JSON type (bool, i64, or string)
+fn parse_value(arg: &str) -> serde_json::Value {
+  if arg == "true" || arg == "1" {
+    serde_json::Value::Bool(true)
+  } else if arg == "false" || arg == "0" {
+    serde_json::Value::Bool(false)
+  } else if let Ok(n) = arg.parse::<i64>() {
+    serde_json::Value::Number(serde_json::Number::from(n))
+  } else {
+    serde_json::Value::String(arg.to_string())
+  }
+}
+
 pub fn parse_arguments<T>(argv: Vec<String>) -> crate::Result<T>
 where
   T: de::DeserializeOwned + CommandArg,
@@ -82,14 +95,17 @@ where
   if argv.len() == 2 {
     let only = argv.get(1).expect("");
 
-    // Deserializing directly implies primitive (i32, i64, etc)
-    //
-    if let Ok(only) = serde_json::from_str(&only) {
-      return Ok(only);
-    };
+    // If it's a flag (starts with --), fall through to the map parsing logic
+    if !only.starts_with("--") {
+      // Deserializing directly implies primitive (i32, i64, etc)
+      //
+      if let Ok(only) = serde_json::from_str(&only) {
+        return Ok(only);
+      };
 
-    let ser = serde_json::to_string(&only).map_err(|e| Error::Other(e.into()))?;
-    return Ok(serde_json::from_str(&ser).map_err(|e| Error::Other(e.into()))?);
+      let ser = serde_json::to_string(&only).map_err(|e| Error::Other(e.into()))?;
+      return Ok(serde_json::from_str(&ser).map_err(|e| Error::Other(e.into()))?);
+    }
   }
 
   use serde_json::Map;
@@ -107,24 +123,19 @@ where
       if let Some(pending_key) = key.take() {
         map.insert(pending_key, serde_json::Value::Bool(true));
       }
-      key = Some(arg.to_owned());
+      // Check for --key=value syntax
+      if let Some((k, v)) = arg.split_once('=') {
+        let value = parse_value(v);
+        map.insert(k.to_owned(), value);
+      } else {
+        key = Some(arg.to_owned());
+      }
     } else {
       let Some(unwrapped_key) = key else {
         return Err(Error::ArgParseError("param without option".to_string()));
       };
-      // Try parsing as bool first (including 1/0), then i64, then fall back to string
-      if arg == "true" || arg == "1" {
-        map.insert(unwrapped_key, serde_json::Value::Bool(true));
-      } else if arg == "false" || arg == "0" {
-        map.insert(unwrapped_key, serde_json::Value::Bool(false));
-      } else if let Ok(n) = arg.parse::<i64>() {
-        map.insert(
-          unwrapped_key,
-          serde_json::Value::Number(serde_json::Number::from(n as i64)),
-        );
-      } else {
-        map.insert(unwrapped_key, serde_json::Value::String(arg.to_string()));
-      }
+      let value = parse_value(arg);
+      map.insert(unwrapped_key, value);
       key = None;
     }
   }
