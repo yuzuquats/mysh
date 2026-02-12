@@ -22,9 +22,7 @@ async fn test_root_command_help_flag() {
   let scripts = Scripts::new(TestInfo {}).add_command(test_cmd);
 
   // Test --help flag
-  let result = scripts
-    .run_command("test_cmd --help")
-    .await;
+  let result = scripts.run_command("test_cmd --help").await;
 
   // Should succeed (print help and return Null)
   assert!(result.is_ok());

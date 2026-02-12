@@ -93,7 +93,8 @@ impl<T: Clone> Callable for Scripts<T> {
       let include_args = argv.iter().any(|s| s == "--args");
 
       // If argv is ["status", "--help"], show help for all subcommands
-      let non_flag_args: Vec<&String> = argv.iter()
+      let non_flag_args: Vec<&String> = argv
+        .iter()
         .filter(|arg| !arg.starts_with("--") && !arg.starts_with("-"))
         .collect();
 
