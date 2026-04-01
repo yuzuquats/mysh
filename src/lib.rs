@@ -1,8 +1,5 @@
-#![feature(associated_type_defaults)]
 #![feature(coroutines)]
 #![feature(coroutine_trait)]
-#![feature(iter_from_coroutine)]
-#![feature(backtrace_frames)]
 
 mod command_arg;
 mod command_list;
