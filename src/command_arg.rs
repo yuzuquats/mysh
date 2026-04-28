@@ -118,7 +118,11 @@ where
     }
 
     if arg.starts_with("--") {
-      let arg = arg.trim_start_matches("--");
+      // Normalize kebab-case CLI flags (`--from-dump`) to the
+      // snake_case Rust field names serde will deserialize into
+      // (`from_dump`). Without this, fields with `_` in their
+      // names silently parse as missing when the CLI uses `-`.
+      let arg = arg.trim_start_matches("--").replace('-', "_");
       // If there's a pending key without a value, treat it as a boolean flag
       if let Some(pending_key) = key.take() {
         map.insert(pending_key, serde_json::Value::Bool(true));
@@ -128,7 +132,7 @@ where
         let value = parse_value(v);
         map.insert(k.to_owned(), value);
       } else {
-        key = Some(arg.to_owned());
+        key = Some(arg);
       }
     } else {
       let Some(unwrapped_key) = key else {
